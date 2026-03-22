@@ -961,8 +961,28 @@ async function fetchJSON(url) {
 
 // PRICES
 async function fetchPrices() {
-  const data = await fetchJSON('/api/prices');
-  if (!data) return;
+  let data = await fetchJSON('/api/prices');
+  // If server returned empty (CoinGecko rate-limited), fallback to Binance directly from client
+  if (!data || Object.keys(data).length < 3) {
+    try {
+      const r = await fetch('https://api.binance.com/api/v3/ticker/24hr');
+      const tickers = await r.json();
+      const syms = ['BTCUSDT','ETHUSDT','SOLUSDT','DOGEUSDT','XRPUSDT','BNBUSDT','ADAUSDT','AVAXUSDT','LINKUSDT','DOTUSDT','NEARUSDT','OPUSDT','ARBUSDT','SUIUSDT','TONUSDT','PEPEUSDT','WIFUSDT','FETUSDT'];
+      data = {};
+      for (const t of tickers) {
+        if (syms.includes(t.symbol)) {
+          data[t.symbol] = {
+            price: parseFloat(t.lastPrice),
+            change: parseFloat(t.priceChangePercent),
+            volume: parseFloat(t.quoteVolume),
+            high: parseFloat(t.highPrice),
+            low: parseFloat(t.lowPrice),
+          };
+        }
+      }
+    } catch(e) { console.warn('Binance fallback failed:', e); }
+  }
+  if (!data || Object.keys(data).length === 0) return;
   STATE.lastPrices = { ...STATE.prices };
   STATE.prices = data;
   renderTopCards();
@@ -970,6 +990,7 @@ async function fetchPrices() {
   renderPumpDump();
   renderArbitrage();
   updateStatusBar();
+  updateTickerBar();
 }
 
 // FUNDING
