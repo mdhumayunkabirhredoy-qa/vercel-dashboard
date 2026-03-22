@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/**/*.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/(.*)", "dest": "/public/$1" }
+  ],
+  "env": {
+    "BINANCE_API_KEY": "@binance-api-key",
+    "BINANCE_SECRET": "@binance-secret",
+    "ANTHROPIC_API_KEY": "@anthropic-api-key",
+    "ANTHROPIC_BASE_URL": "@anthropic-base-url"
+  }
+}
