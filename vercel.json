@@ -1,17 +1,9 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "api/**/*.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "public/**",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/(.*)", "dest": "/public/$1" }
+  "rewrites": [
+    { "source": "/api/prices", "destination": "/api/prices" },
+    { "source": "/api/funding", "destination": "/api/funding" },
+    { "source": "/api/liquidations", "destination": "/api/liquidations" },
+    { "source": "/api/predictions", "destination": "/api/predictions" },
+    { "source": "/api/analyze", "destination": "/api/analyze" }
   ]
 }

@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>⚡ Crypto Command Center</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--card:#12121a;--border:#1a1a2e;--cyan:#00d4ff;--green:#00ff88;--red:#ff4444;--yellow:#ffd700;--text:#e0e0e0;--dim:#666}
+body{font-family:'SF Mono','Fira Code','Courier New',monospace;background:var(--bg);color:var(--text);min-height:100vh}
+a{color:var(--cyan);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* Header */
+.header{background:linear-gradient(90deg,rgba(0,212,255,.08),rgba(0,255,136,.04));border-bottom:1px solid var(--cyan);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)}
+.logo{font-size:18px;font-weight:700;color:var(--cyan);text-shadow:0 0 20px rgba(0,212,255,.4);letter-spacing:1px}
+.header-info{display:flex;gap:20px;align-items:center;font-size:12px}
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
+.status-dot.on{background:var(--green);box-shadow:0 0 8px var(--green)}
+.status-dot.off{background:var(--red)}
+.time{color:var(--green)}
+
+/* Tabs */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);background:rgba(18,18,26,.6);padding:0 20px;overflow-x:auto;position:sticky;top:52px;z-index:99}
+.tab{padding:12px 20px;cursor:pointer;color:var(--dim);font-size:12px;font-weight:600;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+.tab:hover{color:var(--cyan);background:rgba(0,212,255,.05)}
+.tab.active{color:var(--cyan);border-bottom-color:var(--cyan);text-shadow:0 0 10px rgba(0,212,255,.5)}
+
+/* Content */
+.content{padding:20px;max-width:1400px;margin:0 auto}
+.panel{display:none}
+.panel.active{display:block}
+
+/* Grid */
+.grid{display:grid;gap:16px;margin-bottom:20px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:1fr 1fr 1fr}
+.g4{grid-template-columns:1fr 1fr 1fr 1fr}
+@media(max-width:900px){.g2,.g3,.g4{grid-template-columns:1fr}}
+
+/* Card */
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;transition:border-color .3s}
+.card:hover{border-color:rgba(0,212,255,.3)}
+.card-title{font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;font-weight:700}
+.card-value{font-size:22px;font-weight:700;margin-bottom:4px}
+.card-sub{font-size:11px;color:var(--dim)}
+
+/* Price cards */
+.price-card .card-value{font-size:20px}
+.price-card .sym{color:var(--yellow);font-size:13px;font-weight:700}
+
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:rgba(0,212,255,.06);color:var(--cyan);padding:10px 8px;text-align:left;border-bottom:1px solid rgba(0,212,255,.15);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+td{padding:8px;border-bottom:1px solid rgba(255,255,255,.03)}
+tr:hover{background:rgba(0,212,255,.03)}
+.pos{color:var(--green)}
+.neg{color:var(--red)}
+.neu{color:var(--yellow)}
+
+/* Buttons */
+.btn{padding:10px 20px;border:1px solid var(--cyan);background:rgba(0,212,255,.08);color:var(--cyan);border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;transition:all .2s}
+.btn:hover{background:rgba(0,212,255,.2);box-shadow:0 0 15px rgba(0,212,255,.2)}
+.btn-green{border-color:var(--green);color:var(--green);background:rgba(0,255,136,.08)}
+.btn-red{border-color:var(--red);color:var(--red);background:rgba(255,68,68,.08)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* Sentiment */
+.sentiment{text-align:center;padding:20px}
+.sentiment-label{font-size:32px;font-weight:700;margin-bottom:8px}
+.sentiment-score{font-size:16px;color:var(--dim)}
+
+/* Loading */
+.loading{color:var(--dim);text-align:center;padding:20px;font-size:13px}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--cyan);border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Glow anim */
+@keyframes glow{0%,100%{box-shadow:0 0 5px rgba(0,212,255,.1)}50%{box-shadow:0 0 20px rgba(0,212,255,.3)}}
+.card.glow{animation:glow 2s ease-in-out infinite}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:rgba(0,0,0,.2)}
+::-webkit-scrollbar-thumb{background:var(--cyan);border-radius:3px}
+
+/* Badge */
+.badge{display:inline-block;padding:3px 8px;border-radius:3px;font-size:10px;font-weight:700}
+.badge-green{background:rgba(0,255,136,.15);color:var(--green);border:1px solid rgba(0,255,136,.3)}
+.badge-red{background:rgba(255,68,68,.15);color:var(--red);border:1px solid rgba(255,68,68,.3)}
+.badge-yellow{background:rgba(255,215,0,.15);color:var(--yellow);border:1px solid rgba(255,215,0,.3)}
+
+/* Info box */
+.info-box{background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.15);border-radius:8px;padding:16px;margin:16px 0;font-size:12px;line-height:1.7}
+.info-box h3{color:var(--yellow);margin-bottom:8px;font-size:13px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">⚡ CRYPTO COMMAND CENTER</div>
+  <div class="header-info">
+    <span id="connStatus"><span class="status-dot off"></span>Loading...</span>
+    <span class="time" id="clock">--:--:--</span>
+  </div>
+</div>
+
+<div class="tabs" id="tabs">
+  <div class="tab active" data-tab="dashboard">📊 Dashboard</div>
+  <div class="tab" data-tab="funding">💰 Funding Arb</div>
+  <div class="tab" data-tab="predictions">🔮 Predictions</div>
+  <div class="tab" data-tab="analysis">🧠 AI Analysis</div>
+  <div class="tab" data-tab="help">❓ Help</div>
+</div>
+
+<div class="content">
+  <!-- ═══ DASHBOARD ═══ -->
+  <div class="panel active" id="p-dashboard">
+    <div class="grid g4" id="priceCards">
+      <div class="card price-card"><div class="card-title">Loading...</div><div class="card-value">--</div></div>
+      <div class="card price-card"><div class="card-title">Loading...</div><div class="card-value">--</div></div>
+      <div class="card price-card"><div class="card-title">Loading...</div><div class="card-value">--</div></div>
+      <div class="card price-card"><div class="card-title">Loading...</div><div class="card-value">--</div></div>
+    </div>
+
+    <div class="grid g2">
+      <div class="card">
+        <div class="card-title">📊 Market Overview</div>
+        <table>
+          <thead><tr><th>SYM</th><th>PRICE</th><th>OI</th><th>L/S RATIO</th></tr></thead>
+          <tbody id="marketTable"><tr><td colspan="4" class="loading"><span class="spin"></span>Loading market data...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">💰 Top Funding Arbs</div>
+        <table>
+          <thead><tr><th>SYM</th><th>ANNUAL%</th><th>DAILY%</th><th>SHORT→LONG</th></tr></thead>
+          <tbody id="fundingMini"><tr><td colspan="4" class="loading"><span class="spin"></span>Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid g2">
+      <div class="card" id="aiMiniCard">
+        <div class="card-title">🧠 AI Sentiment</div>
+        <div class="sentiment">
+          <div class="sentiment-label" id="aiMiniSentiment">--</div>
+          <div class="sentiment-score" id="aiMiniConf">Loading AI analysis...</div>
+        </div>
+        <div id="aiMiniSummary" style="font-size:11px;color:#aaa;line-height:1.5"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">📡 AI Trading Signals</div>
+        <table>
+          <thead><tr><th>SYM</th><th>ACTION</th><th>CONF</th><th>ENTRY</th><th>R/R</th></tr></thead>
+          <tbody id="signalsMini"><tr><td colspan="5" class="loading">Waiting for AI...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ FUNDING ═══ -->
+  <div class="panel" id="p-funding">
+    <div class="card">
+      <div class="card-title">💰 Funding Rate Arbitrage — Full List</div>
+      <table>
+        <thead><tr><th>#</th><th>SYMBOL</th><th>ANNUAL%</th><th>DAILY%</th><th>SHORT ON</th><th>LONG ON</th><th>EARN/$1K/8H</th></tr></thead>
+        <tbody id="fundingFull"><tr><td colspan="7" class="loading"><span class="spin"></span>Loading funding data...</td></tr></tbody>
+      </table>
+    </div>
+    <div class="info-box">
+      <h3>💡 Как зарабатывать на Funding Arbitrage</h3>
+      <p>1. Найди монету с высоким спредом (>50% annual)<br>
+      2. <strong>SHORT</strong> на бирже где фандинг <strong>ВЫСОКИЙ</strong> (тебе платят)<br>
+      3. <strong>LONG</strong> на бирже где фандинг <strong>НИЗКИЙ</strong> (ты платишь меньше)<br>
+      4. Позиции равные по размеру = <strong>DELTA NEUTRAL</strong> (без разницы куда цена)<br>
+      5. Каждые 8 часов получаешь разницу фандинга 💰<br><br>
+      ⚠️ Риски: ликвидация при сильном движении, комиссии<br>
+      💡 Используй 3-5x плечо макс, держи запас маржи</p>
+    </div>
+  </div>
+
+  <!-- ═══ PREDICTIONS ═══ -->
+  <div class="panel" id="p-predictions">
+    <div class="grid g2">
+      <div class="card">
+        <div class="card-title">🔮 Polymarket — Top Markets</div>
+        <table>
+          <thead><tr><th>QUESTION</th><th>YES</th><th>VOLUME</th><th>CAT</th></tr></thead>
+          <tbody id="polyTable"><tr><td colspan="4" class="loading"><span class="spin"></span>Loading Polymarket...</td></tr></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">📊 Kalshi — Top Markets</div>
+        <table>
+          <thead><tr><th>QUESTION</th><th>YES</th><th>VOLUME</th></tr></thead>
+          <tbody id="kalshiTable"><tr><td colspan="3" class="loading"><span class="spin"></span>Loading Kalshi...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ AI ANALYSIS ═══ -->
+  <div class="panel" id="p-analysis">
+    <div class="grid g2">
+      <div class="card glow">
+        <div class="card-title">🧠 Market Sentiment</div>
+        <div class="sentiment">
+          <div class="sentiment-label" id="aiSentiment">--</div>
+          <div class="sentiment-score" id="aiScore">Score: --</div>
+          <div style="margin-top:8px;color:var(--dim)" id="aiConf">Confidence: --</div>
+        </div>
+        <div style="text-align:center;margin-top:16px">
+          <button class="btn" onclick="runAnalysis()" id="analyzeBtn">⚡ Analyze Now</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📡 Trading Signals</div>
+        <table>
+          <thead><tr><th>SYM</th><th>ACTION</th><th>CONF</th><th>ENTRY</th><th>SL</th><th>TP</th><th>R/R</th></tr></thead>
+          <tbody id="signalsFull"><tr><td colspan="7" class="loading">Click "Analyze Now" to get signals</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📝 Summary</div>
+      <div id="aiSummary" style="font-size:12px;line-height:1.7;color:#ccc">Click "Analyze Now" to get a full market analysis from AI.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚠️ Risk Warnings</div>
+      <div id="aiWarnings" style="font-size:12px;line-height:1.7;color:var(--yellow)">No warnings</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">💰 Funding Recommendations</div>
+      <div id="aiFunding" style="font-size:12px;line-height:1.7;color:#ccc">--</div>
+    </div>
+  </div>
+
+  <!-- ═══ HELP ═══ -->
+  <div class="panel" id="p-help">
+    <div class="card">
+      <div class="card-title">❓ Как пользоваться</div>
+      <div style="font-size:12px;line-height:1.8;color:#ccc">
+        <h3 style="color:var(--yellow);margin:12px 0 8px">📊 Dashboard</h3>
+        Главный экран с ценами, OI, фандингом, AI сентиментом и сигналами. Обновляется каждые 3 секунды.
+
+        <h3 style="color:var(--yellow);margin:12px 0 8px">💰 Funding Arbitrage</h3>
+        Стабильный заработок без риска. SHORT на одной бирже + LONG на другой = DELTA NEUTRAL.<br>
+        Каждые 8 часов получаешь спред фандинга.<br>
+        <strong>$1000 → $600-900/месяц при хороших условиях.</strong>
+
+        <h3 style="color:var(--yellow);margin:12px 0 8px">🔮 Prediction Markets</h3>
+        Polymarket и Kalshi — рынки предсказаний.<br>
+        Ищи рынки где ТЫ считаешь вероятность выше чем рынок → ставь на это.<br>
+        Темы: политика, крипто, спорт, погода, экономика.
+
+        <h3 style="color:var(--yellow);margin:12px 0 8px">🧠 AI Analysis</h3>
+        Claude анализирует рынок: цены, фандинг, OI, L/S ratio.<br>
+        Генерирует: сентимент, сигналы (LONG/SHORT), фандинг рекомендации, риск предупреждения.<br>
+        <strong>Нажми "Analyze Now" для свежего анализа.</strong>
+
+        <h3 style="color:var(--yellow);margin:12px 0 8px">⚠️ ВАЖНО</h3>
+        • Используй только деньги которые можешь потерять<br>
+        • Начни с минимума ($10-50)<br>
+        • Плечо 3-5x максимум<br>
+        • Всегда ставь стоп-лосс<br>
+        • AI не всегда прав — используй свою голову
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══ STATE ═══
+let prices={}, funding=[], liqData={}, predictions={}, aiData=null;
+
+// ═══ UTILS ═══
+const fmt=(v,d=2)=>{if(!v&&v!==0)return'--';return parseFloat(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d})};
+const fmtPrice=(v)=>v>=1?'$'+fmt(v,2):'$'+fmt(v,5);
+const clr=(v)=>v>0?'pos':v<0?'neg':'neu';
+
+// ═══ CLOCK ═══
+setInterval(()=>{document.getElementById('clock').textContent=new Date().toISOString().slice(11,19)+' UTC'},1000);
+
+// ═══ TABS ═══
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',e=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  e.target.classList.add('active');
+  document.getElementById('p-'+e.target.dataset.tab).classList.add('active');
+}));
+
+// ═══ FETCH PRICES ═══
+async function fetchPrices(){
+  try{
+    const r=await fetch('/api/prices');
+    prices=await r.json();
+    updatePrices();
+    document.getElementById('connStatus').innerHTML='<span class="status-dot on"></span>Connected';
+  }catch(e){
+    document.getElementById('connStatus').innerHTML='<span class="status-dot off"></span>Offline';
+  }
+}
+
+function updatePrices(){
+  const syms=['BTCUSDT','ETHUSDT','SOLUSDT','DOGEUSDT','XRPUSDT','BNBUSDT','WIFUSDT','PEPEUSDT','ARBUSDT','OPUSDT','AVAXUSDT','LINKUSDT'];
+  const names={BTCUSDT:'Bitcoin',ETHUSDT:'Ethereum',SOLUSDT:'Solana',DOGEUSDT:'Dogecoin',XRPUSDT:'XRP',BNBUSDT:'BNB',WIFUSDT:'dogwifhat',PEPEUSDT:'PEPE',ARBUSDT:'Arbitrum',OPUSDT:'Optimism',AVAXUSDT:'Avalanche',LINKUSDT:'Chainlink'};
+  const top=syms.filter(s=>prices[s]).slice(0,4);
+  
+  // Price cards
+  const cards=top.map(s=>`
+    <div class="card price-card">
+      <div class="card-title"><span class="sym">${s.replace('USDT','')}</span> · ${names[s]||''}</div>
+      <div class="card-value">${fmtPrice(prices[s])}</div>
+    </div>`).join('');
+  document.getElementById('priceCards').innerHTML=cards||'<div class="card"><div class="loading">No price data</div></div>';
+
+  // Market table
+  const rows=syms.filter(s=>prices[s]).map(s=>{
+    const oi=liqData.open_interest?.[s];
+    const ls=liqData.long_short_ratio?.[s];
+    const lsClass=ls?(ls.ratio>1?'pos':'neg'):'';
+    return`<tr>
+      <td><strong>${s.replace('USDT','')}</strong></td>
+      <td>${fmtPrice(prices[s])}</td>
+      <td>${oi?fmt(oi,0):'--'}</td>
+      <td class="${lsClass}">${ls?fmt(ls.ratio,2)+'x':'--'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('marketTable').innerHTML=rows||'<tr><td colspan="4" class="loading">No data</td></tr>';
+}
+
+// ═══ FETCH FUNDING ═══
+async function fetchFunding(){
+  try{
+    const r=await fetch('/api/funding');
+    funding=await r.json();
+    updateFunding();
+  }catch(e){}
+}
+
+function updateFunding(){
+  // Mini (dashboard)
+  const mini=funding.slice(0,8).map((a,i)=>`
+    <tr>
+      <td><strong>${a.symbol}</strong></td>
+      <td class="${a.annual_pct>50?'pos':'neu'}">${a.annual_pct}%</td>
+      <td>${a.daily_pct}%</td>
+      <td style="font-size:10px">${a.short_exchange}→${a.long_exchange}</td>
+    </tr>`).join('');
+  document.getElementById('fundingMini').innerHTML=mini||'<tr><td colspan="4">No arb opportunities</td></tr>';
+
+  // Full
+  const full=funding.map((a,i)=>{
+    const earn=(a.spread*1000).toFixed(4);
+    return`<tr>
+      <td>${i+1}</td>
+      <td><strong>${a.symbol}</strong></td>
+      <td class="pos" style="font-weight:700">${a.annual_pct}%</td>
+      <td>${a.daily_pct}%</td>
+      <td>${a.short_exchange}</td>
+      <td>${a.long_exchange}</td>
+      <td class="pos">$${earn}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('fundingFull').innerHTML=full||'<tr><td colspan="7">No arb data</td></tr>';
+}
+
+// ═══ FETCH LIQUIDATIONS ═══
+async function fetchLiquidations(){
+  try{
+    const r=await fetch('/api/liquidations');
+    liqData=await r.json();
+    updatePrices(); // re-render market table with OI/LS data
+  }catch(e){}
+}
+
+// ═══ FETCH PREDICTIONS ═══
+async function fetchPredictions(){
+  try{
+    const r=await fetch('/api/predictions');
+    predictions=await r.json();
+    updatePredictions();
+  }catch(e){}
+}
+
+function updatePredictions(){
+  // Polymarket
+  const poly=(predictions.polymarket||[]).slice(0,15).map(m=>{
+    const yesClass=m.yes_price>0.5?'pos':'neg';
+    return`<tr>
+      <td><a href="${m.url}" target="_blank">${m.question.substring(0,45)}${m.question.length>45?'...':''}</a></td>
+      <td class="${yesClass}" style="font-weight:700">${(m.yes_price*100).toFixed(0)}¢</td>
+      <td>$${fmt(m.volume,0)}</td>
+      <td style="font-size:10px">${m.category}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('polyTable').innerHTML=poly||'<tr><td colspan="4">No Polymarket data</td></tr>';
+
+  // Kalshi
+  const kal=(predictions.kalshi||[]).slice(0,15).map(m=>{
+    const yesClass=m.yes_price>0.5?'pos':'neg';
+    return`<tr>
+      <td><a href="${m.url}" target="_blank">${m.question.substring(0,50)}${m.question.length>50?'...':''}</a></td>
+      <td class="${yesClass}" style="font-weight:700">${(m.yes_price*100).toFixed(0)}¢</td>
+      <td>$${fmt(m.volume,0)}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('kalshiTable').innerHTML=kal||'<tr><td colspan="3">No Kalshi data</td></tr>';
+}
+
+// ═══ AI ANALYSIS ═══
+async function runAnalysis(){
+  const btn=document.getElementById('analyzeBtn');
+  btn.disabled=true;
+  btn.textContent='⏳ Analyzing...';
+  document.getElementById('aiSentiment').textContent='Analyzing...';
+  document.getElementById('aiMiniSentiment').textContent='⏳';
+  
+  try{
+    const r=await fetch('/api/analyze');
+    aiData=await r.json();
+    updateAI();
+  }catch(e){
+    document.getElementById('aiSummary').textContent='Error: '+e.message;
+  }finally{
+    btn.disabled=false;
+    btn.textContent='⚡ Analyze Now';
+  }
+}
+
+function updateAI(){
+  if(!aiData||aiData.error){
+    document.getElementById('aiSummary').textContent=aiData?.error||'No data';
+    return;
+  }
+  
+  const s=aiData.market_sentiment?.toUpperCase()||'--';
+  const color=s.includes('BULL')?'var(--green)':s.includes('BEAR')?'var(--red)':'var(--yellow)';
+  
+  // Main
+  document.getElementById('aiSentiment').innerHTML=`<span style="color:${color}">${s}</span>`;
+  document.getElementById('aiScore').textContent=`Score: ${aiData.sentiment_score||'--'}`;
+  document.getElementById('aiConf').textContent=`Confidence: ${aiData.confidence||'--'}%`;
+  document.getElementById('aiSummary').textContent=aiData.summary||'';
+  
+  // Mini
+  document.getElementById('aiMiniSentiment').innerHTML=`<span style="color:${color}">${s}</span>`;
+  document.getElementById('aiMiniConf').textContent=`Confidence: ${aiData.confidence||'--'}%`;
+  document.getElementById('aiMiniSummary').textContent=(aiData.summary||'').substring(0,200);
+  
+  // Warnings
+  const warnings=aiData.risk_warnings||[];
+  document.getElementById('aiWarnings').innerHTML=warnings.length>0?
+    warnings.map(w=>`<div>⚠️ ${w}</div>`).join(''):'No current warnings';
+  
+  // Funding recs
+  const frecs=aiData.funding_recommendations||[];
+  document.getElementById('aiFunding').innerHTML=frecs.length>0?
+    frecs.map(f=>`<div>💰 <strong>${f.symbol}</strong>: ${f.strategy} (est: ${f.expected_daily_return})</div>`).join(''):'No recommendations';
+  
+  // Signals
+  const sigs=aiData.trading_signals||[];
+  const sigRows=sigs.map(s=>{
+    const actClass=s.action==='LONG'?'pos':s.action==='SHORT'?'neg':'neu';
+    return`<tr>
+      <td><strong>${s.symbol}</strong></td>
+      <td class="${actClass}" style="font-weight:700">${s.action==='LONG'?'🟢':'🔴'} ${s.action}</td>
+      <td>${s.confidence}%</td>
+      <td>${fmtPrice(s.entry)}</td>
+      <td class="neg">${fmtPrice(s.stop_loss)}</td>
+      <td class="pos">${fmtPrice(s.take_profit)}</td>
+      <td>${fmt(s.risk_reward,1)}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('signalsFull').innerHTML=sigRows||'<tr><td colspan="7">No signals</td></tr>';
+  
+  // Mini signals
+  const miniSigs=sigs.slice(0,4).map(s=>{
+    const actClass=s.action==='LONG'?'pos':s.action==='SHORT'?'neg':'neu';
+    return`<tr>
+      <td><strong>${s.symbol}</strong></td>
+      <td class="${actClass}">${s.action==='LONG'?'🟢':'🔴'} ${s.action}</td>
+      <td>${s.confidence}%</td>
+      <td>${fmtPrice(s.entry)}</td>
+      <td>${fmt(s.risk_reward,1)}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('signalsMini').innerHTML=miniSigs||'<tr><td colspan="5">No signals</td></tr>';
+}
+
+// ═══ POLLING LOOPS ═══
+// Fast: prices every 3s
+setInterval(fetchPrices, 3000);
+
+// Medium: funding every 30s, liquidation data every 10s
+setInterval(fetchFunding, 30000);
+setInterval(fetchLiquidations, 10000);
+
+// Slow: predictions every 2min
+setInterval(fetchPredictions, 120000);
+
+// ═══ INITIAL LOAD ═══
+fetchPrices();
+fetchFunding();
+fetchLiquidations();
+fetchPredictions();
+
+console.log('⚡ Crypto Command Center loaded');
+</script>
+</body>
+</html>
