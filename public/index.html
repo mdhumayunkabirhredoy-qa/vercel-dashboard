@@ -1821,7 +1821,14 @@ async function fetchBrain() {
   document.getElementById('aiStatusBar').innerHTML = '<div class="ai-dot"></div> AI: Ready';
 }
 
-init();
+// Boot
+document.addEventListener('DOMContentLoaded', () => {
+  init().catch(e => console.error('Init failed:', e));
+});
+// Fallback: if DOM already loaded
+if (document.readyState !== 'loading') {
+  init().catch(e => console.error('Init failed:', e));
+}
 </script>
 </body>
 </html>
