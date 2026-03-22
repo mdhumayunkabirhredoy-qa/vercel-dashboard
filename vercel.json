@@ -4,6 +4,7 @@
     { "source": "/api/funding", "destination": "/api/funding" },
     { "source": "/api/liquidations", "destination": "/api/liquidations" },
     { "source": "/api/predictions", "destination": "/api/predictions" },
-    { "source": "/api/analyze", "destination": "/api/analyze" }
+    { "source": "/api/analyze", "destination": "/api/analyze" },
+    { "source": "/api/polymarket_wallets", "destination": "/api/polymarket_wallets" }
   ]
 }

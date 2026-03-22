@@ -660,6 +660,28 @@ Whale accumulation detected in BTC/ETH. Large players positioned for upside. 3 w
 </div>
 </div>
 </div>
+<div class="grid grid-1 mt-12">
+<div class="panel">
+<div class="panel-header"><span class="panel-title" style="color:var(--yellow)">🐋 Top Whale Wallets (&gt;$50K)</span><button class="btn btn-cyan" onclick="fetchPolymarketWhales()" style="font-size:10px">Scan</button></div>
+<div class="panel-body no-pad" style="max-height:300px;overflow-y:auto">
+<table class="data-table" id="whale-wallets-table">
+<thead><tr><th>ADDRESS</th><th>MARKET</th><th>SIDE</th><th>SIZE</th><th>PREDICTION</th></tr></thead>
+<tbody><tr><td colspan="5" style="text-align:center;color:var(--muted)">Click Scan to fetch whale positions...</td></tr></tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="grid grid-1 mt-12">
+<div class="panel">
+<div class="panel-header"><span class="panel-title" style="color:var(--green)">🤖 AI Market Predictions</span></div>
+<div class="panel-body no-pad" style="max-height:300px;overflow-y:auto">
+<table class="data-table" id="ai-predictions-table">
+<thead><tr><th>#</th><th>MARKET</th><th>YES</th><th>NO</th><th>VOLUME</th><th>WHALES</th><th>PREDICTION</th></tr></thead>
+<tbody><tr><td colspan="7" style="text-align:center;color:var(--muted)">Loading AI predictions...</td></tr></tbody>
+</table>
+</div>
+</div>
+</div>
 </div>
 
 <!-- ==================== 8. ARBITRAGE ==================== -->
@@ -899,6 +921,7 @@ const STATE = {
   funding: [],
   liquidations: { open_interest: {}, long_short_ratio: {} },
   predictions: { polymarket: [], kalshi: [] },
+  polymarket_wallets: { markets: [], whale_wallets: [], predictions: [] },
   analysis: null,
   paperBalance: 100000,
   paperPositions: [],
@@ -1056,6 +1079,74 @@ async function fetchPredictions() {
   STATE.predictions = data;
   renderPredictions();
   renderPredictionArb();
+  fetchPolymarketWhales();
+}
+
+// POLYMARKET WHALES
+async function fetchPolymarketWhales() {
+  const data = await fetchJSON('/api/polymarket_wallets');
+  if (!data) return;
+  STATE.polymarket_wallets = data;
+  renderWhaleWallets();
+  renderAIPredictions();
+}
+
+function renderWhaleWallets() {
+  const d = STATE.polymarket_wallets;
+  if (!d) return;
+  const whales = d.whale_wallets || [];
+  const tbody = $('#whale-wallets-table tbody');
+  if (!tbody) return;
+  if (whales.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted)">No whale positions found</td></tr>';
+    return;
+  }
+  tbody.innerHTML = whales.slice(0, 10).map(w => {
+    const sideColor = w.side === 'YES' ? 'var(--green)' : 'var(--red)';
+    const sizeStr = '$' + (w.size >= 1000 ? (w.size/1000).toFixed(1) + 'K' : w.size.toFixed(0));
+    const sim = w.simulated ? ' <span style="color:var(--muted);font-size:9px">(sim)</span>' : '';
+    // Find market prediction
+    const mkts = d.markets || [];
+    const mkt = mkts.find(m => m.question && m.question.substring(0,30) === (w.market || '').substring(0,30));
+    const pred = mkt ? mkt.prediction : '—';
+    const predColor = mkt ? (mkt.pred_color === 'green' ? 'var(--green)' : mkt.pred_color === 'red' ? 'var(--red)' : 'var(--yellow)') : 'var(--muted)';
+    return `<tr>
+      <td class="mono" style="color:var(--cyan);font-size:10px">${w.addr}${sim}</td>
+      <td style="font-size:10px">${w.market || '—'}</td>
+      <td style="color:${sideColor};font-weight:bold">${w.side}</td>
+      <td class="num" style="color:var(--yellow)">${sizeStr}</td>
+      <td style="color:${predColor};font-weight:bold;font-size:10px">${pred}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderAIPredictions() {
+  const d = STATE.polymarket_wallets;
+  if (!d) return;
+  const markets = d.markets || [];
+  const whales = d.whale_wallets || [];
+  const tbody = $('#ai-predictions-table tbody');
+  if (!tbody) return;
+  if (markets.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted)">No market data</td></tr>';
+    return;
+  }
+  tbody.innerHTML = markets.slice(0, 12).map((m, i) => {
+    const yesColor = m.yes_price > 0.6 ? 'var(--green)' : m.yes_price < 0.4 ? 'var(--red)' : 'var(--text)';
+    const noColor = m.no_price > 0.6 ? 'var(--red)' : m.no_price < 0.4 ? 'var(--green)' : 'var(--text)';
+    const volStr = m.volume >= 1e6 ? '$' + (m.volume/1e6).toFixed(1) + 'M' : m.volume >= 1000 ? '$' + (m.volume/1000).toFixed(0) + 'K' : '$' + m.volume.toFixed(0);
+    const whaleCount = whales.filter(w => w.market && m.question && w.market.substring(0,25) === m.question.substring(0,25)).length;
+    const predColor = m.pred_color === 'green' ? 'var(--green)' : m.pred_color === 'red' ? 'var(--red)' : 'var(--yellow)';
+    return `<tr>
+      <td class="num" style="color:var(--muted)">${i+1}</td>
+      <td style="font-size:10px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.question}</td>
+      <td class="num" style="color:${yesColor}">${(m.yes_price*100).toFixed(0)}¢</td>
+      <td class="num" style="color:${noColor}">${(m.no_price*100).toFixed(0)}¢</td>
+      <td class="num" style="color:var(--muted)">${volStr}</td>
+      <td class="num" style="color:var(--yellow)">${whaleCount > 0 ? '🐋' + whaleCount : '—'}</td>
+      <td style="color:${predColor};font-weight:bold;font-size:10px">${m.prediction}</td>
+    </tr>`;
+  }).join('');
 }
 
 // AI ANALYSIS
