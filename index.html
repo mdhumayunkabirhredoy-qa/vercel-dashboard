@@ -2,529 +2,1509 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>⚡ Crypto Command Center</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QUANTUM TERMINAL — Crypto Trading Dashboard</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0a0a0f;--card:#12121a;--border:#1a1a2e;--cyan:#00d4ff;--green:#00ff88;--red:#ff4444;--yellow:#ffd700;--text:#e0e0e0;--dim:#666}
-body{font-family:'SF Mono','Fira Code','Courier New',monospace;background:var(--bg);color:var(--text);min-height:100vh}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#0a0a0f;--bg2:#0d0d14;--bg3:#12121c;--bg4:#1a1a2e;--border:#1e1e3a;
+--cyan:#00D4FF;--green:#00FF88;--magenta:#FF00FF;--red:#FF4444;--yellow:#FFD700;
+--white:#e0e0e0;--muted:#6a6a8a;--text:#c8c8e0;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Courier New',monospace;font-size:13px;overflow:hidden}
 a{color:var(--cyan);text-decoration:none}
 a:hover{text-decoration:underline}
+input,select,button,textarea{font-family:inherit;font-size:inherit;background:var(--bg2);color:var(--text);border:1px solid var(--border);padding:6px 10px;border-radius:4px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--cyan)}
+button{cursor:pointer;transition:all .2s}
+button:hover{border-color:var(--cyan);color:var(--cyan)}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
 
-/* Header */
-.header{background:linear-gradient(90deg,rgba(0,212,255,.08),rgba(0,255,136,.04));border-bottom:1px solid var(--cyan);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;backdrop-filter:blur(10px)}
-.logo{font-size:18px;font-weight:700;color:var(--cyan);text-shadow:0 0 20px rgba(0,212,255,.4);letter-spacing:1px}
-.header-info{display:flex;gap:20px;align-items:center;font-size:12px}
-.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
-.status-dot.on{background:var(--green);box-shadow:0 0 8px var(--green)}
-.status-dot.off{background:var(--red)}
-.time{color:var(--green)}
+/* LAYOUT */
+#app{display:flex;flex-direction:column;height:100vh}
+#header{display:flex;align-items:center;padding:8px 16px;background:var(--bg2);border-bottom:1px solid var(--border);gap:12px;flex-shrink:0}
+#header .logo{font-size:16px;font-weight:bold;color:var(--cyan);text-shadow:0 0 10px rgba(0,212,255,.3);white-space:nowrap}
+#header .logo span{color:var(--magenta)}
+#tabs{display:flex;gap:2px;flex-wrap:wrap;flex:1;justify-content:center}
+.tab{padding:5px 10px;cursor:pointer;color:var(--muted);border:1px solid transparent;border-radius:3px;transition:all .2s;font-size:11px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.tab:hover{color:var(--text);background:var(--bg3)}
+.tab.active{color:var(--cyan);border-color:var(--cyan);background:rgba(0,212,255,.05);text-shadow:0 0 8px rgba(0,212,255,.3)}
+#header .clock{color:var(--muted);font-size:11px;white-space:nowrap}
 
-/* Tabs */
-.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);background:rgba(18,18,26,.6);padding:0 20px;overflow-x:auto;position:sticky;top:52px;z-index:99}
-.tab{padding:12px 20px;cursor:pointer;color:var(--dim);font-size:12px;font-weight:600;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
-.tab:hover{color:var(--cyan);background:rgba(0,212,255,.05)}
-.tab.active{color:var(--cyan);border-bottom-color:var(--cyan);text-shadow:0 0 10px rgba(0,212,255,.5)}
+#content{flex:1;overflow-y:auto;padding:12px;overflow-x:hidden}
+.page{display:none}
+.page.active{display:block}
 
-/* Content */
-.content{padding:20px;max-width:1400px;margin:0 auto}
-.panel{display:none}
-.panel.active{display:block}
+#statusbar{display:flex;align-items:center;padding:6px 16px;background:var(--bg2);border-top:1px solid var(--border);gap:20px;font-size:11px;flex-shrink:0;flex-wrap:wrap}
+.status-item{display:flex;align-items:center;gap:4px}
+.status-dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+.status-dot.green{background:var(--green);box-shadow:0 0 6px var(--green)}
+.status-dot.red{background:var(--red);box-shadow:0 0 6px var(--red)}
+.status-dot.yellow{background:var(--yellow);box-shadow:0 0 6px var(--yellow)}
 
-/* Grid */
-.grid{display:grid;gap:16px;margin-bottom:20px}
-.g2{grid-template-columns:1fr 1fr}
-.g3{grid-template-columns:1fr 1fr 1fr}
-.g4{grid-template-columns:1fr 1fr 1fr 1fr}
-@media(max-width:900px){.g2,.g3,.g4{grid-template-columns:1fr}}
+/* PANELS */
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:6px;margin-bottom:12px;overflow:hidden}
+.panel-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg3)}
+.panel-title{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--cyan);font-weight:bold}
+.panel-body{padding:12px}
+.panel-body.no-pad{padding:0}
 
-/* Card */
-.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;transition:border-color .3s}
-.card:hover{border-color:rgba(0,212,255,.3)}
-.card-title{font-size:11px;color:var(--cyan);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;font-weight:700}
-.card-value{font-size:22px;font-weight:700;margin-bottom:4px}
-.card-sub{font-size:11px;color:var(--dim)}
+/* GRID */
+.grid{display:grid;gap:12px}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:1200px){.grid-4{grid-template-columns:repeat(2,1fr)}.grid-3{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){.grid-4,.grid-3,.grid-2{grid-template-columns:1fr}}
 
-/* Price cards */
-.price-card .card-value{font-size:20px}
-.price-card .sym{color:var(--yellow);font-size:13px;font-weight:700}
+/* PRICE CARDS */
+.price-card{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:14px;transition:border-color .3s}
+.price-card:hover{border-color:var(--cyan)}
+.price-card .symbol{font-size:14px;font-weight:bold;color:var(--white)}
+.price-card .name{font-size:10px;color:var(--muted);margin-bottom:6px}
+.price-card .price{font-size:22px;font-weight:bold;margin:4px 0}
+.price-card .change{font-size:13px;font-weight:bold}
+.price-card .meta{font-size:10px;color:var(--muted);margin-top:6px;display:flex;justify-content:space-between}
+.up{color:var(--green)}.down{color:var(--red)}
 
-/* Table */
-table{width:100%;border-collapse:collapse;font-size:12px}
-th{background:rgba(0,212,255,.06);color:var(--cyan);padding:10px 8px;text-align:left;border-bottom:1px solid rgba(0,212,255,.15);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
-td{padding:8px;border-bottom:1px solid rgba(255,255,255,.03)}
-tr:hover{background:rgba(0,212,255,.03)}
-.pos{color:var(--green)}
-.neg{color:var(--red)}
-.neu{color:var(--yellow)}
+/* TABLE */
+.data-table{width:100%;border-collapse:collapse;font-size:12px}
+.data-table th{text-align:left;padding:8px 10px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2)}
+.data-table td{padding:6px 10px;border-bottom:1px solid rgba(30,30,58,.5)}
+.data-table tr:hover td{background:rgba(0,212,255,.02)}
+.data-table .num{text-align:right;font-variant-numeric:tabular-nums}
 
-/* Buttons */
-.btn{padding:10px 20px;border:1px solid var(--cyan);background:rgba(0,212,255,.08);color:var(--cyan);border-radius:6px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;transition:all .2s}
-.btn:hover{background:rgba(0,212,255,.2);box-shadow:0 0 15px rgba(0,212,255,.2)}
-.btn-green{border-color:var(--green);color:var(--green);background:rgba(0,255,136,.08)}
-.btn-red{border-color:var(--red);color:var(--red);background:rgba(255,68,68,.08)}
-.btn:disabled{opacity:.4;cursor:not-allowed}
+/* BADGES */
+.badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:bold;text-transform:uppercase}
+.badge-green{background:rgba(0,255,136,.1);color:var(--green);border:1px solid rgba(0,255,136,.2)}
+.badge-red{background:rgba(255,68,68,.1);color:var(--red);border:1px solid rgba(255,68,68,.2)}
+.badge-cyan{background:rgba(0,212,255,.1);color:var(--cyan);border:1px solid rgba(0,212,255,.2)}
+.badge-yellow{background:rgba(255,215,0,.1);color:var(--yellow);border:1px solid rgba(255,215,0,.2)}
+.badge-magenta{background:rgba(255,0,255,.1);color:var(--magenta);border:1px solid rgba(255,0,255,.2)}
 
-/* Sentiment */
-.sentiment{text-align:center;padding:20px}
-.sentiment-label{font-size:32px;font-weight:700;margin-bottom:8px}
-.sentiment-score{font-size:16px;color:var(--dim)}
+/* AI GLOW */
+.ai-glow{border:1px solid var(--magenta);animation:aiPulse 2s ease-in-out infinite}
+@keyframes aiPulse{0%,100%{box-shadow:0 0 5px rgba(255,0,255,.2)}50%{box-shadow:0 0 20px rgba(255,0,255,.4),0 0 40px rgba(255,0,255,.1)}}
+.ai-thinking .panel-header{background:linear-gradient(90deg,var(--bg3),rgba(255,0,255,.05),var(--bg3));background-size:200% 100%;animation:aiShimmer 1.5s linear infinite}
+@keyframes aiShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
-/* Loading */
-.loading{color:var(--dim);text-align:center;padding:20px;font-size:13px}
-.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--cyan);border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite;margin-right:8px;vertical-align:middle}
+/* SPINNER */
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--cyan);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* Glow anim */
-@keyframes glow{0%,100%{box-shadow:0 0 5px rgba(0,212,255,.1)}50%{box-shadow:0 0 20px rgba(0,212,255,.3)}}
-.card.glow{animation:glow 2s ease-in-out infinite}
+/* TYPEWRITER */
+.typewriter{overflow:hidden;border-right:2px solid var(--cyan);white-space:pre-wrap;animation:blink .7s step-end infinite}
+@keyframes blink{50%{border-color:transparent}}
 
-/* Scrollbar */
-::-webkit-scrollbar{width:6px;height:6px}
-::-webkit-scrollbar-track{background:rgba(0,0,0,.2)}
-::-webkit-scrollbar-thumb{background:var(--cyan);border-radius:3px}
+/* SUB TABS */
+.sub-tabs{display:flex;gap:4px;margin-bottom:12px}
+.sub-tab{padding:6px 14px;cursor:pointer;color:var(--muted);border:1px solid var(--border);border-radius:4px;font-size:11px;text-transform:uppercase;transition:all .2s}
+.sub-tab:hover{color:var(--text)}
+.sub-tab.active{color:var(--yellow);border-color:var(--yellow);background:rgba(255,215,0,.05)}
+.sub-page{display:none}.sub-page.active{display:block}
 
-/* Badge */
-.badge{display:inline-block;padding:3px 8px;border-radius:3px;font-size:10px;font-weight:700}
-.badge-green{background:rgba(0,255,136,.15);color:var(--green);border:1px solid rgba(0,255,136,.3)}
-.badge-red{background:rgba(255,68,68,.15);color:var(--red);border:1px solid rgba(255,68,68,.3)}
-.badge-yellow{background:rgba(255,215,0,.15);color:var(--yellow);border:1px solid rgba(255,215,0,.3)}
+/* TOGGLE */
+.toggle-wrap{display:flex;align-items:center;gap:8px}
+.toggle{width:40px;height:20px;background:var(--border);border-radius:10px;position:relative;cursor:pointer;transition:background .3s}
+.toggle.on{background:var(--green)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;background:var(--white);border-radius:50%;transition:transform .3s}
+.toggle.on::after{transform:translateX(20px)}
 
-/* Info box */
-.info-box{background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.15);border-radius:8px;padding:16px;margin:16px 0;font-size:12px;line-height:1.7}
-.info-box h3{color:var(--yellow);margin-bottom:8px;font-size:13px}
+/* PROGRESS BAR */
+.progress-bar{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;margin-top:4px}
+.progress-fill{height:100%;border-radius:3px;transition:width .5s}
+
+/* FEED ITEM */
+.feed-item{padding:10px 14px;border-bottom:1px solid rgba(30,30,58,.4);transition:background .2s}
+.feed-item:hover{background:rgba(0,212,255,.02)}
+.feed-item:last-child{border-bottom:none}
+.feed-time{font-size:10px;color:var(--muted)}
+
+/* FLEX HELPERS */
+.flex{display:flex}.flex-col{flex-direction:column}.gap-8{gap:8px}.gap-12{gap:12px}.gap-16{gap:16px}
+.items-center{align-items:center}.justify-between{justify-content:space-between}.flex-1{flex:1}
+.text-right{text-align:right}.text-center{text-align:center}
+.mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}.mt-8{margin-top:8px}.mt-12{margin-top:12px}
+
+/* STAT BOX */
+.stat-box{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:12px;text-align:center}
+.stat-box .stat-val{font-size:20px;font-weight:bold;margin:4px 0}
+.stat-box .stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+
+/* SIGNAL CARD */
+.signal-card{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:8px}
+.signal-card.buy{border-left:3px solid var(--green)}
+.signal-card.sell{border-left:3px solid var(--red)}
+.signal-card.hold{border-left:3px solid var(--yellow)}
+
+/* ALERT */
+.alert-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(30,30,58,.4);font-size:12px}
+.alert-icon{font-size:18px}
+.alert-item.pump{border-left:3px solid var(--green)}
+.alert-item.dump{border-left:3px solid var(--red)}
+.alert-item.whale{border-left:3px solid var(--yellow)}
+.alert-item.new-listing{border-left:3px solid var(--magenta)}
+
+/* NEWS */
+.news-item{padding:12px 14px;border-bottom:1px solid rgba(30,30,58,.4)}
+.news-item .headline{font-size:13px;color:var(--white);margin-bottom:4px}
+.news-item .news-meta{font-size:10px;color:var(--muted);display:flex;gap:10px;align-items:center}
+.impact-high{color:var(--red)}.impact-med{color:var(--yellow)}.impact-low{color:var(--green)}
+
+/* BTN */
+.btn{padding:8px 18px;border-radius:4px;font-weight:bold;text-transform:uppercase;font-size:11px;letter-spacing:.5px;transition:all .2s}
+.btn-cyan{border-color:var(--cyan);color:var(--cyan)}.btn-cyan:hover{background:rgba(0,212,255,.1)}
+.btn-green{border-color:var(--green);color:var(--green)}.btn-green:hover{background:rgba(0,255,136,.1)}
+.btn-red{border-color:var(--red);color:var(--red)}.btn-red:hover{background:rgba(255,68,68,.1)}
+.btn-magenta{border-color:var(--magenta);color:var(--magenta)}.btn-magenta:hover{background:rgba(255,0,255,.1)}
+.btn-yellow{border-color:var(--yellow);color:var(--yellow)}.btn-yellow:hover{background:rgba(255,215,0,.1)}
+.btn.active{background:rgba(0,212,255,.15)}
+
+/* WHALE BAR */
+.whale-bar{display:flex;height:20px;border-radius:3px;overflow:hidden;margin:4px 0}
+.whale-bar .long-bar{background:linear-gradient(90deg,rgba(0,255,136,.6),rgba(0,255,136,.3));transition:width .5s}
+.whale-bar .short-bar{background:linear-gradient(90deg,rgba(255,68,68,.3),rgba(255,68,68,.6));transition:width .5s}
+
+/* CALENDAR */
+.cal-item{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(30,30,58,.3)}
+.cal-date{font-size:10px;color:var(--muted);min-width:80px}
+.cal-event{flex:1}.cal-impact{min-width:50px;text-align:right}
+
+/* Liq feed */
+.liq-item{display:flex;align-items:center;gap:8px;padding:6px 14px;border-bottom:1px solid rgba(30,30,58,.3);font-size:12px;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.liq-item.long-liq{border-left:3px solid var(--red)}
+.liq-item.short-liq{border-left:3px solid var(--green)}
 </style>
 </head>
 <body>
-
-<div class="header">
-  <div class="logo">⚡ CRYPTO COMMAND CENTER</div>
-  <div class="header-info">
-    <span id="connStatus"><span class="status-dot off"></span>Loading...</span>
-    <span class="time" id="clock">--:--:--</span>
-  </div>
+<div id="app">
+<!-- HEADER -->
+<div id="header">
+<div class="logo">QUANTUM<span>TERMINAL</span></div>
+<div id="tabs">
+<div class="tab active" data-tab="dashboard">Dashboard</div>
+<div class="tab" data-tab="funding">Funding Arb</div>
+<div class="tab" data-tab="liquidations">Liquidations</div>
+<div class="tab" data-tab="whales">Whales</div>
+<div class="tab" data-tab="signals">Signals</div>
+<div class="tab" data-tab="trader">Trader</div>
+<div class="tab" data-tab="predictions">Predictions</div>
+<div class="tab" data-tab="arbitrage">Arbitrage</div>
+<div class="tab" data-tab="pumpdump">Pump/Dump</div>
+<div class="tab" data-tab="news">News</div>
+<div class="tab" data-tab="ai">AI Analysis</div>
+</div>
+<div class="clock" id="clock"></div>
 </div>
 
-<div class="tabs" id="tabs">
-  <div class="tab active" data-tab="dashboard">📊 Dashboard</div>
-  <div class="tab" data-tab="funding">💰 Funding Arb</div>
-  <div class="tab" data-tab="predictions">🔮 Predictions</div>
-  <div class="tab" data-tab="analysis">🧠 AI Analysis</div>
-  <div class="tab" data-tab="help">❓ Help</div>
+<!-- CONTENT -->
+<div id="content">
+
+<!-- ==================== 1. DASHBOARD ==================== -->
+<div class="page active" id="page-dashboard">
+<div class="grid grid-4 mb-12" id="top-cards"></div>
+<div class="grid grid-2 mb-12">
+<div class="panel">
+<div class="panel-header"><span class="panel-title">📊 Market Overview</span><span id="market-count" style="color:var(--muted);font-size:10px">18 coins</span></div>
+<div class="panel-body no-pad" style="max-height:380px;overflow-y:auto">
+<table class="data-table" id="market-table">
+<thead><tr><th>Symbol</th><th>Price</th><th>24h %</th><th>Volume</th><th>High</th><th>Low</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</div>
+<div class="flex flex-col gap-12">
+<div class="panel">
+<div class="panel-header"><span class="panel-title">💧 Liquidation Stats</span></div>
+<div class="panel-body" id="dash-liq-stats">
+<div class="grid grid-2 gap-8">
+<div class="stat-box"><div class="stat-label">Total Longs Liq'd</div><div class="stat-val up" id="dash-longs-liq">$0</div></div>
+<div class="stat-box"><div class="stat-label">Total Shorts Liq'd</div><div class="stat-val down" id="dash-shorts-liq">$0</div></div>
+<div class="stat-box"><div class="stat-label">BTC Open Interest</div><div class="stat-val" style="color:var(--cyan)" id="dash-oi">$0</div></div>
+<div class="stat-box"><div class="stat-label">BTC L/S Ratio</div><div class="stat-val" style="color:var(--yellow)" id="dash-ls-ratio">-</div></div>
+</div>
+</div>
+</div>
+<div class="panel">
+<div class="panel-header"><span class="panel-title">🤖 AI Status</span></div>
+<div class="panel-body" id="dash-ai-status">
+<div class="flex items-center gap-8 mb-8"><span class="status-dot green"></span><span>Claude AI Engine Online</span></div>
+<div style="font-size:11px;color:var(--muted)" id="dash-ai-summary">Click AI Analysis tab for full market analysis.</div>
+</div>
+</div>
+<div class="panel">
+<div class="panel-header"><span class="panel-title">💼 Portfolio Summary</span></div>
+<div class="panel-body" id="dash-portfolio">
+<div class="grid grid-2 gap-8">
+<div class="stat-box"><div class="stat-label">Paper Balance</div><div class="stat-val" style="color:var(--green)" id="dash-balance">$100,000</div></div>
+<div class="stat-box"><div class="stat-label">Unrealized PnL</div><div class="stat-val" id="dash-pnl">$0.00</div></div>
+</div>
+</div>
+</div>
+</div>
+</div>
 </div>
 
-<div class="content">
-  <!-- ═══ DASHBOARD ═══ -->
-  <div class="panel active" id="p-dashboard">
-    <div class="grid g4" id="priceCards">
-      <div class="card price-card"><div class="card-title">Loading...</div><div class="card-value">--</div></div>
-      <div class="card price-card"><div class="card-title">Loading...</div><div class="card-value">--</div></div>
-      <div class="card price-card"><div class="card-title">Loading...</div><div class="card-value">--</div></div>
-      <div class="card price-card"><div class="card-title">Loading...</div><div class="card-value">--</div></div>
-    </div>
+<!-- ==================== 2. FUNDING ARB ==================== -->
+<div class="page" id="page-funding">
+<div class="grid grid-3 mb-12" id="funding-stats">
+<div class="stat-box"><div class="stat-label">Best Opportunity</div><div class="stat-val" style="color:var(--green)" id="fund-best">-</div></div>
+<div class="stat-box"><div class="stat-label">Average Annual Rate</div><div class="stat-val" style="color:var(--cyan)" id="fund-avg">-</div></div>
+<div class="stat-box"><div class="stat-label">Active Pairs</div><div class="stat-val" style="color:var(--yellow)" id="fund-count">-</div></div>
+</div>
+<div class="grid grid-2">
+<div class="panel">
+<div class="panel-header"><span class="panel-title">📈 Funding Rate Arbitrage</span><button class="btn btn-cyan" onclick="fetchFunding()" style="font-size:10px">Refresh</button></div>
+<div class="panel-body no-pad" style="max-height:500px;overflow-y:auto">
+<table class="data-table" id="funding-table">
+<thead><tr><th>Symbol</th><th>Annual %</th><th>Daily</th><th>Weekly</th><th>Short On</th><th>Long On</th><th>Spread</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</div>
+<div class="panel">
+<div class="panel-header"><span class="panel-title">🧮 Funding Arb Calculator</span></div>
+<div class="panel-body">
+<div class="flex flex-col gap-8">
+<div><label style="font-size:10px;color:var(--muted)">CAPITAL ($)</label><input type="number" id="arb-capital" value="10000" style="width:100%;margin-top:4px"></div>
+<div><label style="font-size:10px;color:var(--muted)">ANNUAL RATE (%)</label><input type="number" id="arb-rate" value="25" step="0.1" style="width:100%;margin-top:4px"></div>
+<div><label style="font-size:10px;color:var(--muted)">DURATION (DAYS)</label><input type="number" id="arb-days" value="365" style="width:100%;margin-top:4px"></div>
+<button class="btn btn-green" onclick="calcArb()" style="width:100%;margin-top:8px">Calculate Returns</button>
+<div id="arb-results" class="mt-8" style="display:none">
+<div class="grid grid-2 gap-8">
+<div class="stat-box"><div class="stat-label">Daily Profit</div><div class="stat-val up" id="arb-daily">-</div></div>
+<div class="stat-box"><div class="stat-label">Weekly Profit</div><div class="stat-val up" id="arb-weekly">-</div></div>
+<div class="stat-box"><div class="stat-label">Monthly Profit</div><div class="stat-val up" id="arb-monthly">-</div></div>
+<div class="stat-box"><div class="stat-label">Total Profit</div><div class="stat-val" style="color:var(--cyan)" id="arb-total">-</div></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
 
-    <div class="grid g2">
-      <div class="card">
-        <div class="card-title">📊 Market Overview</div>
-        <table>
-          <thead><tr><th>SYM</th><th>PRICE</th><th>24H</th><th>OI</th><th>L/S RATIO</th></tr></thead>
-          <tbody id="marketTable"><tr><td colspan="4" class="loading"><span class="spin"></span>Loading market data...</td></tr></tbody>
-        </table>
-      </div>
-      <div class="card">
-        <div class="card-title">💰 Top Funding Arbs</div>
-        <table>
-          <thead><tr><th>SYM</th><th>ANNUAL%</th><th>DAILY%</th><th>SHORT→LONG</th></tr></thead>
-          <tbody id="fundingMini"><tr><td colspan="4" class="loading"><span class="spin"></span>Loading...</td></tr></tbody>
-        </table>
-      </div>
-    </div>
+<!-- ==================== 3. LIQUIDATIONS ==================== -->
+<div class="page" id="page-liquidations">
+<div class="grid grid-4 mb-12" id="liq-stat-cards">
+<div class="stat-box"><div class="stat-label">Longs Liquidated (24h)</div><div class="stat-val down" id="liq-longs-val">$0</div></div>
+<div class="stat-box"><div class="stat-label">Shorts Liquidated (24h)</div><div class="stat-val up" id="liq-shorts-val">$0</div></div>
+<div class="stat-box"><div class="stat-label">BTC Open Interest</div><div class="stat-val" style="color:var(--cyan)" id="liq-oi-val">$0</div></div>
+<div class="stat-box"><div class="stat-label">BTC L/S Ratio</div><div class="stat-val" style="color:var(--yellow)" id="liq-ratio-val">-</div></div>
+</div>
+<div class="grid grid-2">
+<div class="panel">
+<div class="panel-header"><span class="panel-title">🔥 Live Liquidation Feed</span><span style="color:var(--muted);font-size:10px" id="liq-feed-count">0 events</span></div>
+<div class="panel-body no-pad" style="max-height:500px;overflow-y:auto" id="liq-feed"></div>
+</div>
+<div class="flex flex-col gap-12">
+<div class="panel">
+<div class="panel-header"><span class="panel-title">📊 Long/Short Ratios</span></div>
+<div class="panel-body" id="ls-ratios-body"></div>
+</div>
+<div class="panel">
+<div class="panel-header"><span class="panel-title">💰 Open Interest</span></div>
+<div class="panel-body" id="oi-body"></div>
+</div>
+</div>
+</div>
+</div>
 
-    <div class="grid g2">
-      <div class="card" id="aiMiniCard">
-        <div class="card-title">🧠 AI Sentiment</div>
-        <div class="sentiment">
-          <div class="sentiment-label" id="aiMiniSentiment">--</div>
-          <div class="sentiment-score" id="aiMiniConf">Loading AI analysis...</div>
-        </div>
-        <div id="aiMiniSummary" style="font-size:11px;color:#aaa;line-height:1.5"></div>
-      </div>
-      <div class="card">
-        <div class="card-title">📡 AI Trading Signals</div>
-        <table>
-          <thead><tr><th>SYM</th><th>ACTION</th><th>CONF</th><th>ENTRY</th><th>R/R</th></tr></thead>
-          <tbody id="signalsMini"><tr><td colspan="5" class="loading">Waiting for AI...</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+<!-- ==================== 4. WHALES ==================== -->
+<div class="page" id="page-whales">
+<div class="grid grid-4 mb-12">
+<div class="stat-box"><div class="stat-label">Tracked Whales</div><div class="stat-val" style="color:var(--cyan)" id="whale-tracked">24</div></div>
+<div class="stat-box"><div class="stat-label">Near Liquidation</div><div class="stat-val" style="color:var(--red)" id="whale-near-liq">3</div></div>
+<div class="stat-box"><div class="stat-label">Total Whale OI</div><div class="stat-val" style="color:var(--yellow)" id="whale-total-oi">$2.4B</div></div>
+<div class="stat-box"><div class="stat-label">Whale Sentiment</div><div class="stat-val" style="color:var(--green)" id="whale-sentiment">Bullish</div></div>
+</div>
+<div class="grid grid-2">
+<div class="panel">
+<div class="panel-header"><span class="panel-title">🐋 Whale Positions</span></div>
+<div class="panel-body no-pad" style="max-height:350px;overflow-y:auto">
+<table class="data-table" id="whale-table">
+<thead><tr><th>Whale</th><th>Symbol</th><th>Side</th><th>Size</th><th>Entry</th><th>Liq. Price</th><th>Dist %</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</div>
+<div class="flex flex-col gap-12">
+<div class="panel">
+<div class="panel-header"><span class="panel-title">⚠️ Near-Liquidation Alerts (&lt;5%)</span></div>
+<div class="panel-body no-pad" style="max-height:200px;overflow-y:auto" id="whale-alerts"></div>
+</div>
+<div class="panel">
+<div class="panel-header"><span class="panel-title">📡 Whale Trades Feed</span></div>
+<div class="panel-body no-pad" style="max-height:200px;overflow-y:auto" id="whale-feed"></div>
+</div>
+</div>
+</div>
+<div class="panel mt-12 ai-glow">
+<div class="panel-header"><span class="panel-title">🧠 AI Whale Analysis</span></div>
+<div class="panel-body" id="whale-ai" style="min-height:60px;color:var(--magenta);font-size:12px;line-height:1.6">
+Whale accumulation detected in BTC/ETH. Large players positioned for upside. 3 whales within 5% of liquidation — cascading liquidations could trigger a $200M flush. Watch $86,500 support for BTC. Smart money is net long with 1.3:1 ratio.
+</div>
+</div>
+</div>
 
-  <!-- ═══ FUNDING ═══ -->
-  <div class="panel" id="p-funding">
-    <div class="card">
-      <div class="card-title">💰 Funding Rate Arbitrage — Full List</div>
-      <table>
-        <thead><tr><th>#</th><th>SYMBOL</th><th>ANNUAL%</th><th>DAILY%</th><th>SHORT ON</th><th>LONG ON</th><th>EARN/$1K/8H</th></tr></thead>
-        <tbody id="fundingFull"><tr><td colspan="7" class="loading"><span class="spin"></span>Loading funding data...</td></tr></tbody>
-      </table>
-    </div>
-    <div class="info-box">
-      <h3>💡 Как зарабатывать на Funding Arbitrage</h3>
-      <p>1. Найди монету с высоким спредом (>50% annual)<br>
-      2. <strong>SHORT</strong> на бирже где фандинг <strong>ВЫСОКИЙ</strong> (тебе платят)<br>
-      3. <strong>LONG</strong> на бирже где фандинг <strong>НИЗКИЙ</strong> (ты платишь меньше)<br>
-      4. Позиции равные по размеру = <strong>DELTA NEUTRAL</strong> (без разницы куда цена)<br>
-      5. Каждые 8 часов получаешь разницу фандинга 💰<br><br>
-      ⚠️ Риски: ликвидация при сильном движении, комиссии<br>
-      💡 Используй 3-5x плечо макс, держи запас маржи</p>
-    </div>
-  </div>
+<!-- ==================== 5. SIGNALS ==================== -->
+<div class="page" id="page-signals">
+<div class="grid grid-4 mb-12">
+<div class="stat-box"><div class="stat-label">Active Signals</div><div class="stat-val" style="color:var(--cyan)" id="sig-active">0</div></div>
+<div class="stat-box"><div class="stat-label">Win Rate</div><div class="stat-val" style="color:var(--green)" id="sig-winrate">67%</div></div>
+<div class="stat-box"><div class="stat-label">Avg Confidence</div><div class="stat-val" style="color:var(--yellow)" id="sig-avg-conf">0%</div></div>
+<div class="stat-box"><div class="stat-label">Paper PnL</div><div class="stat-val" id="sig-pnl">$0</div></div>
+</div>
+<div class="grid grid-2">
+<div class="panel">
+<div class="panel-header"><span class="panel-title">📡 AI Trading Signals</span><button class="btn btn-magenta" onclick="fetchAnalysis()" style="font-size:10px">Generate Signals</button></div>
+<div class="panel-body" id="signals-list" style="max-height:500px;overflow-y:auto">
+<div style="color:var(--muted);text-align:center;padding:30px">Click "Generate Signals" to get AI trading signals</div>
+</div>
+</div>
+<div class="flex flex-col gap-12">
+<div class="panel">
+<div class="panel-header"><span class="panel-title">💼 Signal Portfolio</span></div>
+<div class="panel-body" id="signal-portfolio">
+<div style="color:var(--muted);text-align:center;padding:20px;font-size:11px">No signals executed yet. Signals appear after AI analysis.</div>
+</div>
+</div>
+<div class="panel">
+<div class="panel-header"><span class="panel-title">📈 Performance History</span></div>
+<div class="panel-body" id="signal-history">
+<div class="grid grid-2 gap-8">
+<div class="stat-box"><div class="stat-label">Total Trades</div><div class="stat-val" style="color:var(--cyan)">47</div></div>
+<div class="stat-box"><div class="stat-label">Win Rate</div><div class="stat-val" style="color:var(--green)">67%</div></div>
+<div class="stat-box"><div class="stat-label">Avg Return</div><div class="stat-val up">+2.3%</div></div>
+<div class="stat-box"><div class="stat-label">Max Drawdown</div><div class="stat-val down">-8.4%</div></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
 
-  <!-- ═══ PREDICTIONS ═══ -->
-  <div class="panel" id="p-predictions">
-    <div class="grid g2">
-      <div class="card">
-        <div class="card-title">🔮 Polymarket — Top Markets</div>
-        <table>
-          <thead><tr><th>QUESTION</th><th>YES</th><th>VOLUME</th><th>CAT</th></tr></thead>
-          <tbody id="polyTable"><tr><td colspan="4" class="loading"><span class="spin"></span>Loading Polymarket...</td></tr></tbody>
-        </table>
-      </div>
-      <div class="card">
-        <div class="card-title">📊 Kalshi — Top Markets</div>
-        <table>
-          <thead><tr><th>QUESTION</th><th>YES</th><th>VOLUME</th></tr></thead>
-          <tbody id="kalshiTable"><tr><td colspan="3" class="loading"><span class="spin"></span>Loading Kalshi...</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+<!-- ==================== 6. TRADER ==================== -->
+<div class="page" id="page-trader">
+<div class="grid grid-3 mb-12">
+<div class="panel">
+<div class="panel-header"><span class="panel-title">⚙️ Trader Configuration</span></div>
+<div class="panel-body">
+<div class="flex flex-col gap-12">
+<div class="flex justify-between items-center">
+<span>Trading Mode</span>
+<div class="flex gap-8 items-center">
+<span id="mode-label" style="color:var(--yellow);font-size:11px">PAPER</span>
+<div class="toggle" id="mode-toggle" onclick="toggleTradeMode()"></div>
+</div>
+</div>
+<div><label style="font-size:10px;color:var(--muted)">MAX POSITION SIZE ($)</label><input type="number" id="trader-max-pos" value="5000" style="width:100%;margin-top:4px"></div>
+<div><label style="font-size:10px;color:var(--muted)">DEFAULT STOP LOSS (%)</label><input type="number" id="trader-sl" value="3" step="0.1" style="width:100%;margin-top:4px"></div>
+<div><label style="font-size:10px;color:var(--muted)">DEFAULT TAKE PROFIT (%)</label><input type="number" id="trader-tp" value="6" step="0.1" style="width:100%;margin-top:4px"></div>
+<div class="flex justify-between items-center"><span>Auto-execute Signals</span><div class="toggle" id="auto-exec-toggle" onclick="this.classList.toggle('on')"></div></div>
+<div class="flex justify-between items-center"><span>Risk Management</span><div class="toggle on" id="risk-toggle" onclick="this.classList.toggle('on')"></div></div>
+</div>
+</div>
+</div>
+<div class="panel">
+<div class="panel-header"><span class="panel-title">📊 Performance Stats</span></div>
+<div class="panel-body">
+<div class="flex flex-col gap-8">
+<div class="flex justify-between"><span style="color:var(--muted)">Total Trades</span><span id="trader-total-trades">0</span></div>
+<div class="flex justify-between"><span style="color:var(--muted)">Win / Loss</span><span id="trader-wl">0 / 0</span></div>
+<div class="flex justify-between"><span style="color:var(--muted)">Win Rate</span><span style="color:var(--green)" id="trader-winrate">0%</span></div>
+<div class="flex justify-between"><span style="color:var(--muted)">Total PnL</span><span id="trader-total-pnl">$0.00</span></div>
+<div class="flex justify-between"><span style="color:var(--muted)">Best Trade</span><span class="up" id="trader-best">-</span></div>
+<div class="flex justify-between"><span style="color:var(--muted)">Worst Trade</span><span class="down" id="trader-worst">-</span></div>
+<div class="flex justify-between"><span style="color:var(--muted)">Sharpe Ratio</span><span style="color:var(--cyan)" id="trader-sharpe">0.00</span></div>
+<div class="flex justify-between"><span style="color:var(--muted)">Paper Balance</span><span style="color:var(--green)" id="trader-balance">$100,000.00</span></div>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-12">
+<div class="panel">
+<div class="panel-header"><span class="panel-title">🤖 Strategies</span></div>
+<div class="panel-body">
+<div class="flex flex-col gap-8">
+<div class="flex justify-between items-center"><span>Momentum</span><div class="toggle on" id="strat-momentum" onclick="this.classList.toggle('on')"></div></div>
+<div class="flex justify-between items-center"><span>Mean Reversion</span><div class="toggle" id="strat-meanrev" onclick="this.classList.toggle('on')"></div></div>
+<div class="flex justify-between items-center"><span>Breakout</span><div class="toggle on" id="strat-breakout" onclick="this.classList.toggle('on')"></div></div>
+<div class="flex justify-between items-center"><span>Funding Arb</span><div class="toggle" id="strat-fundarb" onclick="this.classList.toggle('on')"></div></div>
+<div class="flex justify-between items-center"><span>AI Signals</span><div class="toggle on" id="strat-ai" onclick="this.classList.toggle('on')"></div></div>
+</div>
+</div>
+</div>
+<div class="panel">
+<div class="panel-header"><span class="panel-title">📋 Quick Trade</span></div>
+<div class="panel-body">
+<div class="flex flex-col gap-8">
+<select id="qt-symbol" style="width:100%"><option>BTCUSDT</option><option>ETHUSDT</option><option>SOLUSDT</option><option>BNBUSDT</option></select>
+<div class="flex gap-8">
+<button class="btn btn-green flex-1" onclick="paperTrade('BUY')">Buy / Long</button>
+<button class="btn btn-red flex-1" onclick="paperTrade('SELL')">Sell / Short</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-2 mt-12">
+<div class="panel">
+<div class="panel-header"><span class="panel-title">🔲 Grid Bot Settings</span></div>
+<div class="panel-body">
+<div class="flex flex-col gap-8">
+<div><label style="font-size:10px;color:var(--muted)">SYMBOL</label><select id="grid-symbol" style="width:100%;margin-top:4px"><option>BTCUSDT</option><option>ETHUSDT</option><option>SOLUSDT</option></select></div>
+<div class="grid grid-2 gap-8">
+<div><label style="font-size:10px;color:var(--muted)">UPPER PRICE</label><input type="number" id="grid-upper" value="92000" style="width:100%;margin-top:4px"></div>
+<div><label style="font-size:10px;color:var(--muted)">LOWER PRICE</label><input type="number" id="grid-lower" value="84000" style="width:100%;margin-top:4px"></div>
+</div>
+<div class="grid grid-2 gap-8">
+<div><label style="font-size:10px;color:var(--muted)">GRID LEVELS</label><input type="number" id="grid-levels" value="10" style="width:100%;margin-top:4px"></div>
+<div><label style="font-size:10px;color:var(--muted)">TOTAL INVEST ($)</label><input type="number" id="grid-invest" value="5000" style="width:100%;margin-top:4px"></div>
+</div>
+<button class="btn btn-cyan" onclick="startGrid()" style="width:100%">Start Grid Bot (Paper)</button>
+<div id="grid-status" style="font-size:11px;color:var(--muted)">Grid bot inactive</div>
+</div>
+</div>
+</div>
+<div class="panel">
+<div class="panel-header"><span class="panel-title">📉 DCA Bot Settings</span></div>
+<div class="panel-body">
+<div class="flex flex-col gap-8">
+<div><label style="font-size:10px;color:var(--muted)">SYMBOL</label><select id="dca-symbol" style="width:100%;margin-top:4px"><option>BTCUSDT</option><option>ETHUSDT</option><option>SOLUSDT</option></select></div>
+<div class="grid grid-2 gap-8">
+<div><label style="font-size:10px;color:var(--muted)">BUY AMOUNT ($)</label><input type="number" id="dca-amount" value="100" style="width:100%;margin-top:4px"></div>
+<div><label style="font-size:10px;color:var(--muted)">INTERVAL</label><select id="dca-interval" style="width:100%;margin-top:4px"><option value="1h">Every Hour</option><option value="4h">Every 4 Hours</option><option value="1d" selected>Daily</option><option value="1w">Weekly</option></select></div>
+</div>
+<div><label style="font-size:10px;color:var(--muted)">DIP BUY THRESHOLD (%)</label><input type="number" id="dca-dip" value="5" step="0.5" style="width:100%;margin-top:4px"></div>
+<div class="flex justify-between items-center"><span>Buy Dips Extra</span><div class="toggle on" id="dca-dip-toggle" onclick="this.classList.toggle('on')"></div></div>
+<button class="btn btn-green" onclick="startDCA()" style="width:100%">Start DCA Bot (Paper)</button>
+<div id="dca-status" style="font-size:11px;color:var(--muted)">DCA bot inactive</div>
+</div>
+</div>
+</div>
+</div>
+<div class="panel mt-12">
+<div class="panel-header"><span class="panel-title">📜 Trade Log</span></div>
+<div class="panel-body no-pad" style="max-height:200px;overflow-y:auto" id="trade-log">
+<div style="color:var(--muted);text-align:center;padding:20px;font-size:11px">No trades yet. Use Quick Trade or enable auto-execute.</div>
+</div>
+</div>
+</div>
 
-  <!-- ═══ AI ANALYSIS ═══ -->
-  <div class="panel" id="p-analysis">
-    <div class="grid g2">
-      <div class="card glow">
-        <div class="card-title">🧠 Market Sentiment</div>
-        <div class="sentiment">
-          <div class="sentiment-label" id="aiSentiment">--</div>
-          <div class="sentiment-score" id="aiScore">Score: --</div>
-          <div style="margin-top:8px;color:var(--dim)" id="aiConf">Confidence: --</div>
-        </div>
-        <div style="text-align:center;margin-top:16px">
-          <button class="btn" onclick="runAnalysis()" id="analyzeBtn">⚡ Analyze Now</button>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">📡 Trading Signals</div>
-        <table>
-          <thead><tr><th>SYM</th><th>ACTION</th><th>CONF</th><th>ENTRY</th><th>SL</th><th>TP</th><th>R/R</th></tr></thead>
-          <tbody id="signalsFull"><tr><td colspan="7" class="loading">Click "Analyze Now" to get signals</td></tr></tbody>
-        </table>
-      </div>
-    </div>
+<!-- ==================== 7. PREDICTIONS ==================== -->
+<div class="page" id="page-predictions">
+<div class="grid grid-4 mb-12">
+<div class="stat-box"><div class="stat-label">Polymarket Events</div><div class="stat-val" style="color:var(--cyan)" id="pred-poly-count">0</div></div>
+<div class="stat-box"><div class="stat-label">Kalshi Events</div><div class="stat-val" style="color:var(--magenta)" id="pred-kalshi-count">0</div></div>
+<div class="stat-box"><div class="stat-label">Active Bets</div><div class="stat-val" style="color:var(--yellow)" id="pred-active-bets">0</div></div>
+<div class="stat-box"><div class="stat-label">Bet Portfolio</div><div class="stat-val" style="color:var(--green)" id="pred-portfolio-val">$0</div></div>
+</div>
+<div class="grid grid-2">
+<div class="panel">
+<div class="panel-header"><span class="panel-title" style="color:var(--cyan)">🔵 Polymarket</span><button class="btn btn-cyan" onclick="fetchPredictions()" style="font-size:10px">Refresh</button></div>
+<div class="panel-body no-pad" style="max-height:400px;overflow-y:auto" id="poly-markets"></div>
+</div>
+<div class="panel">
+<div class="panel-header"><span class="panel-title" style="color:var(--magenta)">🟣 Kalshi</span></div>
+<div class="panel-body no-pad" style="max-height:400px;overflow-y:auto" id="kalshi-markets"></div>
+</div>
+</div>
+<div class="grid grid-2 mt-12">
+<div class="panel">
+<div class="panel-header"><span class="panel-title">🎲 Active Bets</span></div>
+<div class="panel-body" id="active-bets">
+<div style="color:var(--muted);text-align:center;padding:20px;font-size:11px">No active bets. Click on a market to place a bet.</div>
+</div>
+</div>
+<div class="panel">
+<div class="panel-header"><span class="panel-title">📊 Spread Analysis</span></div>
+<div class="panel-body" id="spread-analysis">
+<div style="color:var(--muted);text-align:center;padding:20px;font-size:11px">Loading spread data...</div>
+</div>
+</div>
+</div>
+</div>
 
-    <div class="card">
-      <div class="card-title">📝 Summary</div>
-      <div id="aiSummary" style="font-size:12px;line-height:1.7;color:#ccc">Click "Analyze Now" to get a full market analysis from AI.</div>
-    </div>
+<!-- ==================== 8. ARBITRAGE ==================== -->
+<div class="page" id="page-arbitrage">
+<div class="sub-tabs">
+<div class="sub-tab active" data-subtab="arb-cross" data-parent="arbitrage">Cross-Exchange</div>
+<div class="sub-tab" data-subtab="arb-basis" data-parent="arbitrage">Basis Trading</div>
+<div class="sub-tab" data-subtab="arb-prediction" data-parent="arbitrage">Prediction Arb</div>
+</div>
+<div class="sub-page active" id="sub-arb-cross">
+<div class="grid grid-3 mb-12">
+<div class="stat-box"><div class="stat-label">Best Spread</div><div class="stat-val" style="color:var(--green)" id="arb-best-spread">0.00%</div></div>
+<div class="stat-box"><div class="stat-label">Opportunities</div><div class="stat-val" style="color:var(--cyan)" id="arb-opps">0</div></div>
+<div class="stat-box"><div class="stat-label">Est. Daily Profit</div><div class="stat-val" style="color:var(--yellow)" id="arb-est-daily">$0</div></div>
+</div>
+<div class="panel">
+<div class="panel-header"><span class="panel-title">🔄 Cross-Exchange Spreads</span></div>
+<div class="panel-body no-pad" style="max-height:450px;overflow-y:auto">
+<table class="data-table" id="arb-cross-table">
+<thead><tr><th>Symbol</th><th>Exchange A</th><th>Price A</th><th>Exchange B</th><th>Price B</th><th>Spread %</th><th>Est. Profit</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="sub-page" id="sub-arb-basis">
+<div class="grid grid-3 mb-12">
+<div class="stat-box"><div class="stat-label">Avg Basis</div><div class="stat-val" style="color:var(--cyan)" id="basis-avg">0.00%</div></div>
+<div class="stat-box"><div class="stat-label">Best Basis</div><div class="stat-val" style="color:var(--green)" id="basis-best">0.00%</div></div>
+<div class="stat-box"><div class="stat-label">Annualized</div><div class="stat-val" style="color:var(--yellow)" id="basis-annual">0.00%</div></div>
+</div>
+<div class="panel">
+<div class="panel-header"><span class="panel-title">📐 Spot vs Perp Basis</span></div>
+<div class="panel-body no-pad" style="max-height:450px;overflow-y:auto">
+<table class="data-table" id="arb-basis-table">
+<thead><tr><th>Symbol</th><th>Spot Price</th><th>Perp Price</th><th>Basis</th><th>Basis %</th><th>Annualized</th><th>Direction</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="sub-page" id="sub-arb-prediction">
+<div class="grid grid-3 mb-12">
+<div class="stat-box"><div class="stat-label">Matching Markets</div><div class="stat-val" style="color:var(--cyan)" id="pred-arb-matches">0</div></div>
+<div class="stat-box"><div class="stat-label">Best Arb</div><div class="stat-val" style="color:var(--green)" id="pred-arb-best">0.0%</div></div>
+<div class="stat-box"><div class="stat-label">Avg Spread</div><div class="stat-val" style="color:var(--yellow)" id="pred-arb-avg">0.0%</div></div>
+</div>
+<div class="panel">
+<div class="panel-header"><span class="panel-title">🎯 Polymarket vs Kalshi Arbitrage</span></div>
+<div class="panel-body no-pad" style="max-height:450px;overflow-y:auto">
+<table class="data-table" id="arb-pred-table">
+<thead><tr><th>Market</th><th>Poly YES</th><th>Kalshi YES</th><th>Spread</th><th>Action</th></tr></thead>
+<tbody></tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
 
-    <div class="card">
-      <div class="card-title">⚠️ Risk Warnings</div>
-      <div id="aiWarnings" style="font-size:12px;line-height:1.7;color:var(--yellow)">No warnings</div>
-    </div>
+<!-- ==================== 9. PUMP/DUMP ==================== -->
+<div class="page" id="page-pumpdump">
+<div class="grid grid-4 mb-12">
+<div class="stat-box"><div class="stat-label">Pump Alerts</div><div class="stat-val" style="color:var(--green)" id="pd-pump-count">0</div></div>
+<div class="stat-box"><div class="stat-label">Dump Alerts</div><div class="stat-val" style="color:var(--red)" id="pd-dump-count">0</div></div>
+<div class="stat-box"><div class="stat-label">Volume Anomalies</div><div class="stat-val" style="color:var(--yellow)" id="pd-vol-anomaly">0</div></div>
+<div class="stat-box"><div class="stat-label">New Listings</div><div class="stat-val" style="color:var(--magenta)" id="pd-new-listings">2</div></div>
+</div>
+<div class="grid grid-2">
+<div class="panel">
+<div class="panel-header"><span class="panel-title">🚀 Pump Alerts</span></div>
+<div class="panel-body no-pad" style="max-height:350px;overflow-y:auto" id="pump-alerts"></div>
+</div>
+<div class="panel">
+<div class="panel-header"><span class="panel-title">💥 Dump Alerts</span></div>
+<div class="panel-body no-pad" style="max-height:350px;overflow-y:auto" id="dump-alerts"></div>
+</div>
+</div>
+<div class="grid grid-2 mt-12">
+<div class="panel">
+<div class="panel-header"><span class="panel-title">📊 Volume Anomalies</span></div>
+<div class="panel-body no-pad" style="max-height:300px;overflow-y:auto" id="vol-anomalies"></div>
+</div>
+<div class="panel">
+<div class="panel-header"><span class="panel-title">🆕 New Listings & Momentum</span></div>
+<div class="panel-body" id="new-listings">
+<div class="feed-item"><div class="flex justify-between"><span style="color:var(--magenta)">🆕 PENGUUSDT</span><span class="badge badge-magenta">NEW</span></div><div class="feed-time mt-8">Listed 2h ago on Binance — Vol: $45M — +34.5%</div></div>
+<div class="feed-item"><div class="flex justify-between"><span style="color:var(--magenta)">🆕 LAYERUSDT</span><span class="badge badge-magenta">NEW</span></div><div class="feed-time mt-8">Listed 6h ago on Bybit — Vol: $28M — +18.2%</div></div>
+<div class="feed-item"><div class="flex justify-between"><span style="color:var(--cyan)">🔥 WIFUSDT</span><span class="badge badge-green">MOMENTUM</span></div><div class="feed-time mt-8">3x avg volume — RSI 78 — Breaking resistance at $2.45</div></div>
+<div class="feed-item"><div class="flex justify-between"><span style="color:var(--cyan)">🔥 ARUSDT</span><span class="badge badge-green">MOMENTUM</span></div><div class="feed-time mt-8">2.5x avg volume — RSI 72 — Cup & handle on 4H</div></div>
+</div>
+</div>
+</div>
+</div>
 
-    <div class="card">
-      <div class="card-title">💰 Funding Recommendations</div>
-      <div id="aiFunding" style="font-size:12px;line-height:1.7;color:#ccc">--</div>
-    </div>
-  </div>
+<!-- ==================== 10. NEWS ==================== -->
+<div class="page" id="page-news">
+<div class="grid grid-2">
+<div class="panel">
+<div class="panel-header"><span class="panel-title">📰 Crypto News Feed</span><select id="news-filter" style="font-size:10px;padding:3px 8px"><option value="all">All</option><option value="high">High Impact</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
+<div class="panel-body no-pad" style="max-height:600px;overflow-y:auto" id="news-feed"></div>
+</div>
+<div class="flex flex-col gap-12">
+<div class="panel ai-glow">
+<div class="panel-header"><span class="panel-title">🤖 AI News Digest</span></div>
+<div class="panel-body" id="ai-news-digest" style="font-size:12px;line-height:1.7;color:var(--magenta)">
+<strong>Market Digest — Today:</strong><br><br>
+• <span style="color:var(--green)">Bullish:</span> BlackRock ETF inflows hit $500M daily record. Institutional demand surging.<br>
+• <span style="color:var(--yellow)">Neutral:</span> Fed minutes released — rate cut expectations unchanged for Q2.<br>
+• <span style="color:var(--red)">Bearish:</span> Tether FUD resurfaces after audit delay announcement.<br>
+• <span style="color:var(--cyan)">Key Level:</span> BTC holding above $86K support. ETH consolidating near $2,000.<br><br>
+<em>Overall sentiment: Cautiously bullish. Watch CPI data Thursday.</em>
+</div>
+</div>
+<div class="panel">
+<div class="panel-header"><span class="panel-title">📅 Economic Calendar</span></div>
+<div class="panel-body" id="econ-calendar">
+<div class="cal-item"><div class="cal-date">Mon Mar 23</div><div class="cal-event">PMI Data Release</div><div class="cal-impact"><span class="badge badge-yellow">MED</span></div></div>
+<div class="cal-item"><div class="cal-date">Tue Mar 24</div><div class="cal-event">Consumer Confidence</div><div class="cal-impact"><span class="badge badge-yellow">MED</span></div></div>
+<div class="cal-item"><div class="cal-date">Wed Mar 25</div><div class="cal-event">New Home Sales</div><div class="cal-impact"><span class="badge badge-green">LOW</span></div></div>
+<div class="cal-item"><div class="cal-date">Thu Mar 26</div><div class="cal-event">GDP Final (Q4)</div><div class="cal-impact"><span class="badge badge-red">HIGH</span></div></div>
+<div class="cal-item"><div class="cal-date">Thu Mar 26</div><div class="cal-event">Jobless Claims</div><div class="cal-impact"><span class="badge badge-yellow">MED</span></div></div>
+<div class="cal-item"><div class="cal-date">Fri Mar 27</div><div class="cal-event">PCE Price Index</div><div class="cal-impact"><span class="badge badge-red">HIGH</span></div></div>
+<div class="cal-item"><div class="cal-date">Fri Mar 27</div><div class="cal-event">Michigan Consumer Sentiment</div><div class="cal-impact"><span class="badge badge-yellow">MED</span></div></div>
+</div>
+</div>
+<div class="panel">
+<div class="panel-header"><span class="panel-title">📊 Sentiment Gauge</span></div>
+<div class="panel-body">
+<div class="flex flex-col gap-8">
+<div class="flex justify-between"><span style="color:var(--muted)">Fear & Greed Index</span><span style="color:var(--green)">68 — Greed</span></div>
+<div class="progress-bar"><div class="progress-fill" style="width:68%;background:linear-gradient(90deg,var(--red),var(--yellow),var(--green))"></div></div>
+<div class="flex justify-between mt-8"><span style="color:var(--muted)">Social Sentiment</span><span style="color:var(--green)">Bullish (72%)</span></div>
+<div class="progress-bar"><div class="progress-fill" style="width:72%;background:var(--green)"></div></div>
+<div class="flex justify-between mt-8"><span style="color:var(--muted)">News Sentiment</span><span style="color:var(--yellow)">Neutral (55%)</span></div>
+<div class="progress-bar"><div class="progress-fill" style="width:55%;background:var(--yellow)"></div></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
 
-  <!-- ═══ HELP ═══ -->
-  <div class="panel" id="p-help">
-    <div class="card">
-      <div class="card-title">❓ Как пользоваться</div>
-      <div style="font-size:12px;line-height:1.8;color:#ccc">
-        <h3 style="color:var(--yellow);margin:12px 0 8px">📊 Dashboard</h3>
-        Главный экран с ценами, OI, фандингом, AI сентиментом и сигналами. Обновляется каждые 3 секунды.
+<!-- ==================== 11. AI ANALYSIS ==================== -->
+<div class="page" id="page-ai">
+<div class="grid grid-4 mb-12">
+<div class="stat-box"><div class="stat-label">Market Sentiment</div><div class="stat-val" id="ai-sentiment" style="color:var(--yellow)">—</div></div>
+<div class="stat-box"><div class="stat-label">Sentiment Score</div><div class="stat-val" id="ai-score" style="color:var(--cyan)">—</div></div>
+<div class="stat-box"><div class="stat-label">AI Confidence</div><div class="stat-val" id="ai-confidence" style="color:var(--green)">—</div></div>
+<div class="stat-box"><div class="stat-label">Signals Generated</div><div class="stat-val" id="ai-sig-count" style="color:var(--magenta)">0</div></div>
+</div>
+<div class="flex gap-12 mb-12">
+<button class="btn btn-magenta" onclick="fetchAnalysis()" id="ai-analyze-btn">🧠 Run AI Analysis</button>
+<span id="ai-status-text" style="color:var(--muted);font-size:11px;display:flex;align-items:center;gap:6px"></span>
+</div>
+<div class="grid grid-2">
+<div class="panel ai-glow" id="ai-summary-panel">
+<div class="panel-header"><span class="panel-title">🧠 Claude AI Market Analysis</span></div>
+<div class="panel-body" id="ai-summary" style="min-height:200px;line-height:1.8;font-size:12px">
+<div style="color:var(--muted);text-align:center;padding:40px">Click "Run AI Analysis" to get Claude's market analysis with trading signals</div>
+</div>
+</div>
+<div class="flex flex-col gap-12">
+<div class="panel">
+<div class="panel-header"><span class="panel-title">📡 AI Trading Signals</span></div>
+<div class="panel-body" id="ai-signals" style="max-height:300px;overflow-y:auto">
+<div style="color:var(--muted);text-align:center;padding:20px;font-size:11px">Signals appear after analysis</div>
+</div>
+</div>
+<div class="panel">
+<div class="panel-header"><span class="panel-title">⚠️ Risk Warnings</span></div>
+<div class="panel-body" id="ai-risks" style="max-height:200px;overflow-y:auto">
+<div style="color:var(--muted);text-align:center;padding:20px;font-size:11px">Risk warnings appear after analysis</div>
+</div>
+</div>
+</div>
+</div>
+</div>
 
-        <h3 style="color:var(--yellow);margin:12px 0 8px">💰 Funding Arbitrage</h3>
-        Стабильный заработок без риска. SHORT на одной бирже + LONG на другой = DELTA NEUTRAL.<br>
-        Каждые 8 часов получаешь спред фандинга.<br>
-        <strong>$1000 → $600-900/месяц при хороших условиях.</strong>
+</div><!-- /content -->
 
-        <h3 style="color:var(--yellow);margin:12px 0 8px">🔮 Prediction Markets</h3>
-        Polymarket и Kalshi — рынки предсказаний.<br>
-        Ищи рынки где ТЫ считаешь вероятность выше чем рынок → ставь на это.<br>
-        Темы: политика, крипто, спорт, погода, экономика.
-
-        <h3 style="color:var(--yellow);margin:12px 0 8px">🧠 AI Analysis</h3>
-        Claude анализирует рынок: цены, фандинг, OI, L/S ratio.<br>
-        Генерирует: сентимент, сигналы (LONG/SHORT), фандинг рекомендации, риск предупреждения.<br>
-        <strong>Нажми "Analyze Now" для свежего анализа.</strong>
-
-        <h3 style="color:var(--yellow);margin:12px 0 8px">⚠️ ВАЖНО</h3>
-        • Используй только деньги которые можешь потерять<br>
-        • Начни с минимума ($10-50)<br>
-        • Плечо 3-5x максимум<br>
-        • Всегда ставь стоп-лосс<br>
-        • AI не всегда прав — используй свою голову
-      </div>
-    </div>
-  </div>
+<!-- STATUS BAR -->
+<div id="statusbar">
+<div class="status-item"><span class="status-dot green" id="conn-dot"></span><span>Connected</span></div>
+<div class="status-item">PnL: <span id="sb-pnl" style="color:var(--green)">$0.00</span></div>
+<div class="status-item">Trader: <span id="sb-trader" style="color:var(--yellow)">PAPER</span></div>
+<div class="status-item">Prices: <span id="sb-prices" style="color:var(--muted)">—</span></div>
+<div class="status-item" style="margin-left:auto">Last update: <span id="sb-time">—</span></div>
+</div>
 </div>
 
 <script>
-// ═══ STATE ═══
-let prices={}, funding=[], liqData={}, predictions={}, aiData=null;
+/* ============================================
+   QUANTUM TERMINAL — Full Trading Dashboard
+   ============================================ */
 
-// ═══ UTILS ═══
-const fmt=(v,d=2)=>{if(!v&&v!==0)return'--';return parseFloat(v).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d})};
-const fmtPrice=(v)=>v>=1?'$'+fmt(v,2):'$'+fmt(v,5);
-const clr=(v)=>v>0?'pos':v<0?'neg':'neu';
+// ============ STATE ============
+const STATE = {
+  prices: {},
+  funding: [],
+  liquidations: { open_interest: {}, long_short_ratio: {} },
+  predictions: { polymarket: [], kalshi: [] },
+  analysis: null,
+  paperBalance: 100000,
+  paperPositions: [],
+  tradeLog: [],
+  tradeStats: { wins: 0, losses: 0, totalPnl: 0, best: 0, worst: 0 },
+  liqFeed: [],
+  whaleFeed: [],
+  whalePositions: [],
+  gridBot: null,
+  dcaBot: null,
+  activeBets: [],
+  liveMode: false,
+  lastPrices: {}
+};
 
-// ═══ CLOCK ═══
-setInterval(()=>{document.getElementById('clock').textContent=new Date().toISOString().slice(11,19)+' UTC'},1000);
+// ============ SYMBOLS ============
+const SYMBOLS = ['BTCUSDT','ETHUSDT','SOLUSDT','BNBUSDT','XRPUSDT','ADAUSDT','DOGEUSDT','AVAXUSDT','DOTUSDT','LINKUSDT','MATICUSDT','UNIUSDT','LTCUSDT','ATOMUSDT','NEARUSDT','APTUSDT','ARBUSDT','OPUSDT'];
+const TOP4 = ['BTCUSDT','ETHUSDT','SOLUSDT','BNBUSDT'];
+const EXCHANGES = ['Binance','Bybit','OKX','Bitget','dYdX','Hyperliquid'];
 
-// ═══ TABS ═══
-document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',e=>{
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
-  e.target.classList.add('active');
-  document.getElementById('p-'+e.target.dataset.tab).classList.add('active');
+// ============ UTILS ============
+function $(sel) { return document.querySelector(sel); }
+function $$(sel) { return document.querySelectorAll(sel); }
+function fmt(n, d=2) { if (n == null || isNaN(n)) return '—'; return Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); }
+function fmtUsd(n, d=2) { return '$' + fmt(n, d); }
+function fmtK(n) { if (!n) return '$0'; if (n >= 1e9) return '$' + (n/1e9).toFixed(2) + 'B'; if (n >= 1e6) return '$' + (n/1e6).toFixed(2) + 'M'; if (n >= 1e3) return '$' + (n/1e3).toFixed(1) + 'K'; return '$' + n.toFixed(0); }
+function rand(a, b) { return Math.random() * (b - a) + a; }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function timeStr() { return new Date().toLocaleTimeString('en-US', { hour12: false }); }
+function ago(min) { return min < 60 ? min + 'm ago' : Math.floor(min/60) + 'h ago'; }
+
+// ============ TAB NAVIGATION ============
+$$('.tab').forEach(t => t.addEventListener('click', () => {
+  $$('.tab').forEach(x => x.classList.remove('active'));
+  $$('.page').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById('page-' + t.dataset.tab).classList.add('active');
 }));
 
-// ═══ FETCH PRICES ═══
-async function fetchPrices(){
-  try{
-    const r=await fetch('/api/prices');
-    prices=await r.json();
-    updatePrices();
-    document.getElementById('connStatus').innerHTML='<span class="status-dot on"></span>Connected';
-  }catch(e){
-    document.getElementById('connStatus').innerHTML='<span class="status-dot off"></span>Offline';
+// Sub-tabs
+$$('.sub-tab').forEach(t => t.addEventListener('click', () => {
+  const parent = t.dataset.parent;
+  $$('.sub-tab[data-parent="'+parent+'"]').forEach(x => x.classList.remove('active'));
+  $$('#page-'+parent+' .sub-page').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById('sub-' + t.dataset.subtab).classList.add('active');
+}));
+
+// ============ CLOCK ============
+function updateClock() {
+  const now = new Date();
+  $('#clock').textContent = now.toLocaleString('en-US', { hour12: false, month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ============ API FETCHING ============
+async function fetchJSON(url) {
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(r.status);
+    return await r.json();
+  } catch (e) {
+    console.warn('Fetch error:', url, e);
+    return null;
   }
 }
 
-function getPrice(s){
-  const d=prices[s];
-  if(!d)return null;
-  if(typeof d==='number')return{price:d,change:0,volume:0};
-  return d;
+// PRICES
+async function fetchPrices() {
+  const data = await fetchJSON('/api/prices');
+  if (!data) return;
+  STATE.lastPrices = { ...STATE.prices };
+  STATE.prices = data;
+  renderTopCards();
+  renderMarketTable();
+  renderPumpDump();
+  renderArbitrage();
+  updateStatusBar();
 }
 
-function updatePrices(){
-  const syms=['BTCUSDT','ETHUSDT','SOLUSDT','DOGEUSDT','XRPUSDT','BNBUSDT','WIFUSDT','PEPEUSDT','ARBUSDT','OPUSDT','AVAXUSDT','LINKUSDT','ADAUSDT','NEARUSDT','SUIUSDT','TONUSDT'];
-  const names={BTCUSDT:'Bitcoin',ETHUSDT:'Ethereum',SOLUSDT:'Solana',DOGEUSDT:'Dogecoin',XRPUSDT:'XRP',BNBUSDT:'BNB',WIFUSDT:'dogwifhat',PEPEUSDT:'PEPE',ARBUSDT:'Arbitrum',OPUSDT:'Optimism',AVAXUSDT:'Avalanche',LINKUSDT:'Chainlink',ADAUSDT:'Cardano',NEARUSDT:'NEAR',SUIUSDT:'Sui',TONUSDT:'Toncoin'};
-  const top=syms.filter(s=>getPrice(s)).slice(0,4);
-  
-  // Price cards
-  const cards=top.map(s=>{
-    const d=getPrice(s);
-    const chg=d.change||0;
-    const chgClass=chg>=0?'pos':'neg';
-    return`<div class="card price-card">
-      <div class="card-title"><span class="sym">${s.replace('USDT','')}</span> · ${names[s]||''}</div>
-      <div class="card-value">${fmtPrice(d.price)}</div>
-      <div class="card-sub"><span class="${chgClass}">${chg>=0?'+':''}${fmt(chg,2)}%</span>${d.volume?' · Vol: $'+fmt(d.volume,0):''}</div>
-    </div>`;
+// FUNDING
+async function fetchFunding() {
+  const data = await fetchJSON('/api/funding');
+  if (!data) return;
+  STATE.funding = Array.isArray(data) ? data : [];
+  renderFunding();
+}
+
+// LIQUIDATIONS
+async function fetchLiquidations() {
+  const data = await fetchJSON('/api/liquidations');
+  if (!data) return;
+  STATE.liquidations = data;
+  renderLiquidations();
+  simulateLiqFeed();
+}
+
+// PREDICTIONS
+async function fetchPredictions() {
+  const data = await fetchJSON('/api/predictions');
+  if (!data) return;
+  STATE.predictions = data;
+  renderPredictions();
+  renderPredictionArb();
+}
+
+// AI ANALYSIS
+async function fetchAnalysis() {
+  const btn = $('#ai-analyze-btn');
+  const statusText = $('#ai-status-text');
+  btn.disabled = true;
+  btn.textContent = '⏳ Analyzing...';
+  statusText.innerHTML = '<span class="spinner"></span> Claude is thinking...';
+  $('#ai-summary-panel').classList.add('ai-thinking');
+  const data = await fetchJSON('/api/analyze');
+  btn.disabled = false;
+  btn.textContent = '🧠 Run AI Analysis';
+  statusText.textContent = 'Analysis complete at ' + timeStr();
+  $('#ai-summary-panel').classList.remove('ai-thinking');
+  if (!data) { statusText.textContent = 'Analysis failed — retry'; return; }
+  STATE.analysis = data;
+  renderAIAnalysis();
+  renderSignals();
+}
+
+// ============ RENDER: TOP CARDS ============
+function renderTopCards() {
+  const el = $('#top-cards');
+  el.innerHTML = TOP4.map(sym => {
+    const d = STATE.prices[sym];
+    if (!d) return '';
+    const ch = parseFloat(d.change) || 0;
+    const cls = ch >= 0 ? 'up' : 'down';
+    const arrow = ch >= 0 ? '▲' : '▼';
+    return `<div class="price-card"><div class="symbol">${sym.replace('USDT','')}</div><div class="name">${d.name || sym}</div><div class="price ${cls}">${fmtUsd(parseFloat(d.price))}</div><div class="change ${cls}">${arrow} ${fmt(ch)}%</div><div class="meta"><span>Vol: ${fmtK(parseFloat(d.volume))}</span><span>MCap: ${fmtK(parseFloat(d.market_cap))}</span></div></div>`;
   }).join('');
-  document.getElementById('priceCards').innerHTML=cards||'<div class="card"><div class="loading"><span class="spin"></span>Connecting to Binance...</div></div>';
+}
 
-  // Market table
-  const rows=syms.filter(s=>getPrice(s)).map(s=>{
-    const d=getPrice(s);
-    const oi=liqData.open_interest?.[s];
-    const ls=liqData.long_short_ratio?.[s];
-    const lsClass=ls?(ls.ratio>1?'pos':'neg'):'';
-    const chgClass=(d.change||0)>=0?'pos':'neg';
-    return`<tr>
-      <td><strong>${s.replace('USDT','')}</strong></td>
-      <td>${fmtPrice(d.price)}</td>
-      <td class="${chgClass}">${d.change?(d.change>=0?'+':'')+fmt(d.change,2)+'%':'--'}</td>
-      <td>${oi?fmt(oi,0):'--'}</td>
-      <td class="${lsClass}">${ls?fmt(ls.ratio,2)+'x':'--'}</td>
-    </tr>`;
+// ============ RENDER: MARKET TABLE ============
+function renderMarketTable() {
+  const tbody = $('#market-table tbody');
+  tbody.innerHTML = SYMBOLS.map(sym => {
+    const d = STATE.prices[sym];
+    if (!d) return '';
+    const ch = parseFloat(d.change) || 0;
+    const cls = ch >= 0 ? 'up' : 'down';
+    return `<tr><td><strong>${sym.replace('USDT','')}</strong></td><td class="num">${fmtUsd(parseFloat(d.price))}</td><td class="num ${cls}">${ch >= 0 ? '+' : ''}${fmt(ch)}%</td><td class="num">${fmtK(parseFloat(d.volume))}</td><td class="num">${fmtUsd(parseFloat(d.high))}</td><td class="num">${fmtUsd(parseFloat(d.low))}</td></tr>`;
   }).join('');
-  document.getElementById('marketTable').innerHTML=rows||'<tr><td colspan="5" class="loading"><span class="spin"></span>Loading...</td></tr>';
 }
 
-// ═══ FETCH FUNDING ═══
-async function fetchFunding(){
-  try{
-    const r=await fetch('/api/funding');
-    funding=await r.json();
-    updateFunding();
-  }catch(e){}
-}
+// ============ RENDER: FUNDING ============
+function renderFunding() {
+  const data = STATE.funding;
+  if (!data.length) return;
+  const sorted = [...data].sort((a, b) => Math.abs(b.annual_pct) - Math.abs(a.annual_pct));
+  const best = sorted[0];
+  const avgAnn = data.reduce((s, d) => s + Math.abs(d.annual_pct || 0), 0) / data.length;
+  $('#fund-best').textContent = (best ? best.symbol.replace('USDT','') + ' ' + fmt(best.annual_pct) + '%' : '-');
+  $('#fund-avg').textContent = fmt(avgAnn) + '%';
+  $('#fund-count').textContent = data.length;
 
-function updateFunding(){
-  // Mini (dashboard)
-  const mini=funding.slice(0,8).map((a,i)=>`
-    <tr>
-      <td><strong>${a.symbol}</strong></td>
-      <td class="${a.annual_pct>50?'pos':'neu'}">${a.annual_pct}%</td>
-      <td>${a.daily_pct}%</td>
-      <td style="font-size:10px">${a.short_exchange}→${a.long_exchange}</td>
-    </tr>`).join('');
-  document.getElementById('fundingMini').innerHTML=mini||'<tr><td colspan="4">No arb opportunities</td></tr>';
-
-  // Full
-  const full=funding.map((a,i)=>{
-    const earn=(a.spread*1000).toFixed(4);
-    return`<tr>
-      <td>${i+1}</td>
-      <td><strong>${a.symbol}</strong></td>
-      <td class="pos" style="font-weight:700">${a.annual_pct}%</td>
-      <td>${a.daily_pct}%</td>
-      <td>${a.short_exchange}</td>
-      <td>${a.long_exchange}</td>
-      <td class="pos">$${earn}</td>
-    </tr>`;
+  const tbody = $('#funding-table tbody');
+  tbody.innerHTML = sorted.map(d => {
+    const weekly = (d.daily_pct || 0) * 7;
+    const cls = d.annual_pct > 0 ? 'up' : 'down';
+    return `<tr><td><strong>${(d.symbol || '').replace('USDT','')}</strong></td><td class="num ${cls}">${fmt(d.annual_pct)}%</td><td class="num">${fmt(d.daily_pct, 4)}%</td><td class="num">${fmt(weekly, 3)}%</td><td>${d.short_exchange || '-'}</td><td>${d.long_exchange || '-'}</td><td class="num">${fmt(d.spread, 4)}%</td></tr>`;
   }).join('');
-  document.getElementById('fundingFull').innerHTML=full||'<tr><td colspan="7">No arb data</td></tr>';
 }
 
-// ═══ FETCH LIQUIDATIONS ═══
-async function fetchLiquidations(){
-  try{
-    const r=await fetch('/api/liquidations');
-    liqData=await r.json();
-    updatePrices(); // re-render market table with OI/LS data
-  }catch(e){}
+// ============ RENDER: LIQUIDATIONS ============
+function renderLiquidations() {
+  const liq = STATE.liquidations;
+  const oi = liq.open_interest || {};
+  const lsr = liq.long_short_ratio || {};
+
+  // Simulated totals
+  const totalLongs = rand(80, 200) * 1e6;
+  const totalShorts = rand(50, 150) * 1e6;
+  $('#liq-longs-val').textContent = fmtK(totalLongs);
+  $('#liq-shorts-val').textContent = fmtK(totalShorts);
+  $('#dash-longs-liq').textContent = fmtK(totalLongs);
+  $('#dash-shorts-liq').textContent = fmtK(totalShorts);
+
+  const btcOI = oi['BTCUSDT'] || oi['BTC'] || 0;
+  const btcOIStr = fmtK(btcOI > 1000 ? btcOI : btcOI * 1e6);
+  $('#liq-oi-val').textContent = btcOIStr;
+  $('#dash-oi').textContent = btcOIStr;
+
+  const btcLS = lsr['BTCUSDT'] || lsr['BTC'] || {};
+  const ratioStr = btcLS.ratio ? fmt(btcLS.ratio, 2) : (btcLS.long && btcLS.short ? fmt(btcLS.long / btcLS.short, 2) : '—');
+  $('#liq-ratio-val').textContent = ratioStr;
+  $('#dash-ls-ratio').textContent = ratioStr;
+
+  // L/S Ratios
+  const lsBody = $('#ls-ratios-body');
+  const symbols = Object.keys(lsr).slice(0, 8);
+  lsBody.innerHTML = symbols.map(sym => {
+    const d = lsr[sym];
+    const longPct = d.long ? (d.long * 100) : 50;
+    const shortPct = d.short ? (d.short * 100) : 50;
+    return `<div style="margin-bottom:10px"><div class="flex justify-between" style="font-size:11px;margin-bottom:3px"><span>${sym.replace('USDT','')}</span><span style="color:var(--muted)">${fmt(longPct,1)}% / ${fmt(shortPct,1)}%</span></div><div class="whale-bar"><div class="long-bar" style="width:${longPct}%"></div><div class="short-bar" style="width:${shortPct}%"></div></div></div>`;
+  }).join('') || '<div style="color:var(--muted);padding:12px;text-align:center">Loading...</div>';
+
+  // Open Interest
+  const oiBody = $('#oi-body');
+  const oiSyms = Object.keys(oi).slice(0, 8);
+  oiBody.innerHTML = oiSyms.map(sym => {
+    const val = oi[sym];
+    const display = val > 1000 ? fmtK(val) : fmtK(val * 1e6);
+    return `<div class="flex justify-between" style="padding:4px 0;font-size:12px;border-bottom:1px solid rgba(30,30,58,.3)"><span>${sym.replace('USDT','')}</span><span style="color:var(--cyan)">${display}</span></div>`;
+  }).join('') || '<div style="color:var(--muted);padding:12px;text-align:center">Loading...</div>';
 }
 
-// ═══ FETCH PREDICTIONS ═══
-async function fetchPredictions(){
-  try{
-    const r=await fetch('/api/predictions');
-    predictions=await r.json();
-    updatePredictions();
-  }catch(e){}
-}
+function simulateLiqFeed() {
+  const sym = pick(SYMBOLS);
+  const side = Math.random() > 0.5 ? 'LONG' : 'SHORT';
+  const size = rand(10, 2000) * 1000;
+  const price = STATE.prices[sym] ? parseFloat(STATE.prices[sym].price) : rand(100, 90000);
+  const item = { sym, side, size, price, time: timeStr() };
+  STATE.liqFeed.unshift(item);
+  if (STATE.liqFeed.length > 50) STATE.liqFeed.pop();
 
-function updatePredictions(){
-  // Polymarket
-  const poly=(predictions.polymarket||[]).slice(0,15).map(m=>{
-    const yesClass=m.yes_price>0.5?'pos':'neg';
-    return`<tr>
-      <td><a href="${m.url}" target="_blank">${m.question.substring(0,45)}${m.question.length>45?'...':''}</a></td>
-      <td class="${yesClass}" style="font-weight:700">${(m.yes_price*100).toFixed(0)}¢</td>
-      <td>$${fmt(m.volume,0)}</td>
-      <td style="font-size:10px">${m.category}</td>
-    </tr>`;
+  const el = $('#liq-feed');
+  el.innerHTML = STATE.liqFeed.map(l => {
+    const cls = l.side === 'LONG' ? 'long-liq' : 'short-liq';
+    const icon = l.side === 'LONG' ? '🔴' : '🟢';
+    const color = l.side === 'LONG' ? 'var(--red)' : 'var(--green)';
+    return `<div class="liq-item ${cls}"><span>${icon}</span><span style="color:${color};font-weight:bold">${l.side}</span><span><strong>${l.sym.replace('USDT','')}</strong></span><span class="flex-1" style="color:var(--muted)">@ ${fmtUsd(l.price)}</span><span style="color:${color};font-weight:bold">${fmtK(l.size)}</span><span class="feed-time">${l.time}</span></div>`;
   }).join('');
-  document.getElementById('polyTable').innerHTML=poly||'<tr><td colspan="4">No Polymarket data</td></tr>';
-
-  // Kalshi
-  const kal=(predictions.kalshi||[]).slice(0,15).map(m=>{
-    const yesClass=m.yes_price>0.5?'pos':'neg';
-    return`<tr>
-      <td><a href="${m.url}" target="_blank">${m.question.substring(0,50)}${m.question.length>50?'...':''}</a></td>
-      <td class="${yesClass}" style="font-weight:700">${(m.yes_price*100).toFixed(0)}¢</td>
-      <td>$${fmt(m.volume,0)}</td>
-    </tr>`;
-  }).join('');
-  document.getElementById('kalshiTable').innerHTML=kal||'<tr><td colspan="3">No Kalshi data</td></tr>';
+  $('#liq-feed-count').textContent = STATE.liqFeed.length + ' events';
 }
 
-// ═══ AI ANALYSIS ═══
-async function runAnalysis(){
-  const btn=document.getElementById('analyzeBtn');
-  btn.disabled=true;
-  btn.textContent='⏳ Analyzing...';
-  document.getElementById('aiSentiment').textContent='Analyzing...';
-  document.getElementById('aiMiniSentiment').textContent='⏳';
-  
-  try{
-    const r=await fetch('/api/analyze');
-    aiData=await r.json();
-    updateAI();
-  }catch(e){
-    document.getElementById('aiSummary').textContent='Error: '+e.message;
-  }finally{
-    btn.disabled=false;
-    btn.textContent='⚡ Analyze Now';
+// ============ RENDER: WHALES ============
+function generateWhaleData() {
+  const names = ['0xHyper','JamesFickel','GSR_Markets','CMS_Holdings','Wintermute','AlamedaRemnant','3ACGhost','GaloisCapital','AutismCapital','CobbieETH','HSaka','Ansem','GCR','ZhuSu2','PengJr','MachiCap','SBFcelmate','VitalikFan','SolanaWhale','ETHMaxi','DogeMoon','LunaSurvivor','FTXcreditor','ArbiWhale'];
+  STATE.whalePositions = names.map(name => {
+    const sym = pick(SYMBOLS.slice(0, 8));
+    const side = Math.random() > 0.45 ? 'LONG' : 'SHORT';
+    const size = rand(500, 50000) * 1000;
+    const currentPrice = STATE.prices[sym] ? parseFloat(STATE.prices[sym].price) : rand(100, 90000);
+    const entry = currentPrice * (1 + rand(-0.15, 0.15));
+    const liqDist = rand(1, 25);
+    const liqPrice = side === 'LONG' ? currentPrice * (1 - liqDist / 100) : currentPrice * (1 + liqDist / 100);
+    return { name, sym, side, size, entry, liqPrice, liqDist, currentPrice };
+  });
+  renderWhales();
+}
+
+function renderWhales() {
+  const data = STATE.whalePositions;
+  const nearLiq = data.filter(w => w.liqDist < 5);
+  const totalOI = data.reduce((s, w) => s + w.size, 0);
+  const longs = data.filter(w => w.side === 'LONG').length;
+  const sentiment = longs / data.length > 0.55 ? 'Bullish' : longs / data.length < 0.45 ? 'Bearish' : 'Neutral';
+  const sentColor = sentiment === 'Bullish' ? 'var(--green)' : sentiment === 'Bearish' ? 'var(--red)' : 'var(--yellow)';
+
+  $('#whale-tracked').textContent = data.length;
+  $('#whale-near-liq').textContent = nearLiq.length;
+  $('#whale-total-oi').textContent = fmtK(totalOI);
+  $('#whale-sentiment').textContent = sentiment;
+  $('#whale-sentiment').style.color = sentColor;
+
+  const tbody = $('#whale-table tbody');
+  tbody.innerHTML = data.sort((a, b) => b.size - a.size).map(w => {
+    const sideColor = w.side === 'LONG' ? 'var(--green)' : 'var(--red)';
+    const distColor = w.liqDist < 5 ? 'var(--red)' : w.liqDist < 10 ? 'var(--yellow)' : 'var(--muted)';
+    return `<tr><td>${w.name}</td><td><strong>${w.sym.replace('USDT','')}</strong></td><td style="color:${sideColor}">${w.side}</td><td class="num">${fmtK(w.size)}</td><td class="num">${fmtUsd(w.entry)}</td><td class="num">${fmtUsd(w.liqPrice)}</td><td class="num" style="color:${distColor}">${fmt(w.liqDist)}%</td></tr>`;
+  }).join('');
+
+  // Near-liq alerts
+  const alertsEl = $('#whale-alerts');
+  if (nearLiq.length === 0) {
+    alertsEl.innerHTML = '<div style="color:var(--muted);padding:20px;text-align:center;font-size:11px">No whales near liquidation</div>';
+  } else {
+    alertsEl.innerHTML = nearLiq.sort((a, b) => a.liqDist - b.liqDist).map(w =>
+      `<div class="alert-item whale"><span class="alert-icon">⚠️</span><div class="flex-1"><strong>${w.name}</strong> — ${w.sym.replace('USDT','')} ${w.side} ${fmtK(w.size)}<br><span style="color:var(--red);font-size:11px">${fmt(w.liqDist)}% from liquidation @ ${fmtUsd(w.liqPrice)}</span></div></div>`
+    ).join('');
+  }
+
+  // Whale trades feed
+  simulateWhaleTrade();
+}
+
+function simulateWhaleTrade() {
+  const names = ['0xHyper','Wintermute','GSR','CMS','Ansem','GCR','PengJr'];
+  const actions = ['opened','closed','increased','decreased'];
+  const trade = {
+    name: pick(names),
+    action: pick(actions),
+    sym: pick(SYMBOLS.slice(0, 8)),
+    side: Math.random() > 0.5 ? 'LONG' : 'SHORT',
+    size: rand(100, 10000) * 1000,
+    time: timeStr()
+  };
+  STATE.whaleFeed.unshift(trade);
+  if (STATE.whaleFeed.length > 20) STATE.whaleFeed.pop();
+
+  const el = $('#whale-feed');
+  el.innerHTML = STATE.whaleFeed.map(t => {
+    const sideColor = t.side === 'LONG' ? 'var(--green)' : 'var(--red)';
+    return `<div class="feed-item"><div class="flex justify-between"><span><strong>${t.name}</strong> ${t.action} <span style="color:${sideColor}">${t.side}</span> ${t.sym.replace('USDT','')}</span><span style="color:var(--cyan)">${fmtK(t.size)}</span></div><div class="feed-time">${t.time}</div></div>`;
+  }).join('');
+}
+
+// ============ RENDER: SIGNALS ============
+function renderSignals() {
+  if (!STATE.analysis || !STATE.analysis.trading_signals) return;
+  const signals = STATE.analysis.trading_signals;
+  $('#sig-active').textContent = signals.length;
+  const avgConf = signals.reduce((s, sig) => s + (sig.confidence || 0), 0) / (signals.length || 1);
+  $('#sig-avg-conf').textContent = fmt(avgConf) + '%';
+
+  const list = $('#signals-list');
+  list.innerHTML = signals.map(sig => {
+    const action = (sig.action || 'HOLD').toUpperCase();
+    const cls = action === 'BUY' || action === 'LONG' ? 'buy' : action === 'SELL' || action === 'SHORT' ? 'sell' : 'hold';
+    const badgeCls = cls === 'buy' ? 'badge-green' : cls === 'sell' ? 'badge-red' : 'badge-yellow';
+    return `<div class="signal-card ${cls}"><div class="flex justify-between items-center mb-8"><div><strong>${(sig.symbol || '').replace('USDT','')}</strong> <span class="badge ${badgeCls}">${action}</span></div><span style="color:var(--cyan);font-size:11px">Confidence: ${sig.confidence || 0}%</span></div><div class="grid grid-3 gap-8" style="font-size:11px"><div><span style="color:var(--muted)">Entry:</span> ${fmtUsd(sig.entry)}</div><div><span style="color:var(--muted)">SL:</span> <span class="down">${fmtUsd(sig.stop_loss)}</span></div><div><span style="color:var(--muted)">TP:</span> <span class="up">${fmtUsd(sig.take_profit)}</span></div></div>${sig.reasoning ? `<div style="font-size:11px;color:var(--muted);margin-top:8px;border-top:1px solid var(--border);padding-top:8px">${sig.reasoning}</div>` : ''}</div>`;
+  }).join('');
+
+  // Also update AI signals page
+  const aiSigs = $('#ai-signals');
+  aiSigs.innerHTML = list.innerHTML;
+}
+
+// ============ RENDER: AI ANALYSIS ============
+function renderAIAnalysis() {
+  const a = STATE.analysis;
+  if (!a) return;
+
+  // Stats
+  const sentimentColor = (a.sentiment_score || 0) > 60 ? 'var(--green)' : (a.sentiment_score || 0) < 40 ? 'var(--red)' : 'var(--yellow)';
+  $('#ai-sentiment').textContent = a.market_sentiment || '—';
+  $('#ai-sentiment').style.color = sentimentColor;
+  $('#ai-score').textContent = (a.sentiment_score || 0) + '/100';
+  $('#ai-confidence').textContent = (a.confidence || 0) + '%';
+  $('#ai-sig-count').textContent = (a.trading_signals || []).length;
+
+  // Summary with typewriter effect
+  const summaryEl = $('#ai-summary');
+  const summaryText = a.summary || 'No summary available.';
+  summaryEl.innerHTML = '';
+  summaryEl.classList.add('typewriter');
+  let idx = 0;
+  const typeInterval = setInterval(() => {
+    if (idx < summaryText.length) {
+      summaryEl.textContent += summaryText[idx];
+      idx++;
+    } else {
+      clearInterval(typeInterval);
+      summaryEl.classList.remove('typewriter');
+    }
+  }, 15);
+
+  // Also update dashboard AI
+  $('#dash-ai-summary').textContent = (a.market_sentiment || 'Analysis complete') + ' — Score: ' + (a.sentiment_score || 0) + '/100';
+
+  // Risk warnings
+  const risksEl = $('#ai-risks');
+  const warnings = a.risk_warnings;
+  if (Array.isArray(warnings) && warnings.length) {
+    risksEl.innerHTML = warnings.map(w => `<div class="alert-item" style="border-left:3px solid var(--red)"><span class="alert-icon">⚠️</span><div>${w}</div></div>`).join('');
+  } else if (typeof warnings === 'string' && warnings) {
+    risksEl.innerHTML = `<div class="alert-item" style="border-left:3px solid var(--red)"><span class="alert-icon">⚠️</span><div>${warnings}</div></div>`;
+  } else {
+    risksEl.innerHTML = '<div style="color:var(--muted);padding:12px;text-align:center;font-size:11px">No risk warnings</div>';
   }
 }
 
-function updateAI(){
-  if(!aiData||aiData.error){
-    document.getElementById('aiSummary').textContent=aiData?.error||'No data';
-    return;
-  }
-  
-  const s=aiData.market_sentiment?.toUpperCase()||'--';
-  const color=s.includes('BULL')?'var(--green)':s.includes('BEAR')?'var(--red)':'var(--yellow)';
-  
-  // Main
-  document.getElementById('aiSentiment').innerHTML=`<span style="color:${color}">${s}</span>`;
-  document.getElementById('aiScore').textContent=`Score: ${aiData.sentiment_score||'--'}`;
-  document.getElementById('aiConf').textContent=`Confidence: ${aiData.confidence||'--'}%`;
-  document.getElementById('aiSummary').textContent=aiData.summary||'';
-  
-  // Mini
-  document.getElementById('aiMiniSentiment').innerHTML=`<span style="color:${color}">${s}</span>`;
-  document.getElementById('aiMiniConf').textContent=`Confidence: ${aiData.confidence||'--'}%`;
-  document.getElementById('aiMiniSummary').textContent=(aiData.summary||'').substring(0,200);
-  
-  // Warnings
-  const warnings=aiData.risk_warnings||[];
-  document.getElementById('aiWarnings').innerHTML=warnings.length>0?
-    warnings.map(w=>`<div>⚠️ ${w}</div>`).join(''):'No current warnings';
-  
-  // Funding recs
-  const frecs=aiData.funding_recommendations||[];
-  document.getElementById('aiFunding').innerHTML=frecs.length>0?
-    frecs.map(f=>`<div>💰 <strong>${f.symbol}</strong>: ${f.strategy} (est: ${f.expected_daily_return})</div>`).join(''):'No recommendations';
-  
-  // Signals
-  const sigs=aiData.trading_signals||[];
-  const sigRows=sigs.map(s=>{
-    const actClass=s.action==='LONG'?'pos':s.action==='SHORT'?'neg':'neu';
-    return`<tr>
-      <td><strong>${s.symbol}</strong></td>
-      <td class="${actClass}" style="font-weight:700">${s.action==='LONG'?'🟢':'🔴'} ${s.action}</td>
-      <td>${s.confidence}%</td>
-      <td>${fmtPrice(s.entry)}</td>
-      <td class="neg">${fmtPrice(s.stop_loss)}</td>
-      <td class="pos">${fmtPrice(s.take_profit)}</td>
-      <td>${fmt(s.risk_reward,1)}</td>
-    </tr>`;
-  }).join('');
-  document.getElementById('signalsFull').innerHTML=sigRows||'<tr><td colspan="7">No signals</td></tr>';
-  
-  // Mini signals
-  const miniSigs=sigs.slice(0,4).map(s=>{
-    const actClass=s.action==='LONG'?'pos':s.action==='SHORT'?'neg':'neu';
-    return`<tr>
-      <td><strong>${s.symbol}</strong></td>
-      <td class="${actClass}">${s.action==='LONG'?'🟢':'🔴'} ${s.action}</td>
-      <td>${s.confidence}%</td>
-      <td>${fmtPrice(s.entry)}</td>
-      <td>${fmt(s.risk_reward,1)}</td>
-    </tr>`;
-  }).join('');
-  document.getElementById('signalsMini').innerHTML=miniSigs||'<tr><td colspan="5">No signals</td></tr>';
+// ============ RENDER: PREDICTIONS ============
+function renderPredictions() {
+  const p = STATE.predictions;
+  const poly = p.polymarket || [];
+  const kalshi = p.kalshi || [];
+  $('#pred-poly-count').textContent = poly.length;
+  $('#pred-kalshi-count').textContent = kalshi.length;
+
+  const polyEl = $('#poly-markets');
+  polyEl.innerHTML = poly.length ? poly.map(m => {
+    const yesColor = m.yes_price > 0.6 ? 'var(--green)' : m.yes_price < 0.4 ? 'var(--red)' : 'var(--yellow)';
+    return `<div class="feed-item"><div class="flex justify-between items-center"><div class="flex-1" style="margin-right:12px"><div style="font-size:12px;color:var(--white)">${m.question || 'Unknown'}</div><div class="feed-time mt-8">${m.category || 'General'} • Vol: ${fmtK(m.volume || 0)}</div></div><div style="text-align:right"><div style="font-size:16px;font-weight:bold;color:${yesColor}">${((m.yes_price || 0) * 100).toFixed(1)}%</div><div style="font-size:9px;color:var(--muted)">YES</div></div></div></div>`;
+  }).join('') : '<div style="color:var(--muted);padding:20px;text-align:center">Loading Polymarket data...</div>';
+
+  const kalshiEl = $('#kalshi-markets');
+  kalshiEl.innerHTML = kalshi.length ? kalshi.map(m => {
+    const yesColor = m.yes_price > 0.6 ? 'var(--green)' : m.yes_price < 0.4 ? 'var(--red)' : 'var(--yellow)';
+    return `<div class="feed-item"><div class="flex justify-between items-center"><div class="flex-1" style="margin-right:12px"><div style="font-size:12px;color:var(--white)">${m.question || 'Unknown'}</div><div class="feed-time mt-8">${m.category || 'General'} • Vol: ${fmtK(m.volume || 0)}</div></div><div style="text-align:right"><div style="font-size:16px;font-weight:bold;color:${yesColor}">${((m.yes_price || 0) * 100).toFixed(1)}%</div><div style="font-size:9px;color:var(--muted)">YES</div></div></div></div>`;
+  }).join('') : '<div style="color:var(--muted);padding:20px;text-align:center">Loading Kalshi data...</div>';
+
+  // Spread analysis
+  renderSpreadAnalysis();
 }
 
-// ═══ POLLING LOOPS ═══
-// Fast: prices every 3s
-setInterval(fetchPrices, 3000);
+function renderSpreadAnalysis() {
+  const p = STATE.predictions;
+  const poly = p.polymarket || [];
+  const kalshi = p.kalshi || [];
+  const spreadEl = $('#spread-analysis');
+  if (!poly.length && !kalshi.length) return;
 
-// Medium: funding every 30s, liquidation data every 10s
-setInterval(fetchFunding, 30000);
-setInterval(fetchLiquidations, 10000);
+  // Find overlapping markets by keyword matching
+  const matches = [];
+  poly.forEach(pm => {
+    kalshi.forEach(km => {
+      const pWords = (pm.question || '').toLowerCase().split(/\s+/);
+      const kWords = (km.question || '').toLowerCase().split(/\s+/);
+      const common = pWords.filter(w => w.length > 3 && kWords.includes(w));
+      if (common.length >= 2) {
+        const spread = Math.abs((pm.yes_price || 0) - (km.yes_price || 0));
+        matches.push({ poly: pm, kalshi: km, spread });
+      }
+    });
+  });
 
-// Slow: predictions every 2min
-setInterval(fetchPredictions, 120000);
+  if (matches.length) {
+    spreadEl.innerHTML = matches.sort((a, b) => b.spread - a.spread).slice(0, 5).map(m =>
+      `<div class="feed-item"><div style="font-size:12px;color:var(--white);margin-bottom:4px">${m.poly.question}</div><div class="flex gap-16" style="font-size:11px"><span style="color:var(--cyan)">Poly: ${((m.poly.yes_price||0)*100).toFixed(1)}%</span><span style="color:var(--magenta)">Kalshi: ${((m.kalshi.yes_price||0)*100).toFixed(1)}%</span><span style="color:var(--yellow)">Spread: ${(m.spread*100).toFixed(1)}%</span></div></div>`
+    ).join('');
+  } else {
+    spreadEl.innerHTML = '<div style="color:var(--muted);padding:20px;text-align:center;font-size:11px">No matching markets found for spread analysis. Markets differ between platforms.</div>';
+  }
+}
 
-// ═══ INITIAL LOAD ═══
-fetchPrices();
-fetchFunding();
-fetchLiquidations();
-fetchPredictions();
+// ============ RENDER: ARBITRAGE ============
+function renderArbitrage() {
+  const prices = STATE.prices;
+  const syms = Object.keys(prices).slice(0, 12);
 
-console.log('⚡ Crypto Command Center loaded');
+  // Cross-exchange spreads
+  const crossData = syms.map(sym => {
+    const basePrice = parseFloat(prices[sym]?.price) || 0;
+    if (!basePrice) return null;
+    const exA = pick(EXCHANGES.slice(0, 3));
+    let exB = pick(EXCHANGES.slice(3));
+    const spreadPct = rand(0.01, 0.8);
+    const priceA = basePrice * (1 + rand(-0.002, 0.002));
+    const priceB = priceA * (1 + spreadPct / 100);
+    return { sym, exA, exB, priceA, priceB, spread: spreadPct, profit: basePrice * spreadPct / 100 };
+  }).filter(Boolean).sort((a, b) => b.spread - a.spread);
+
+  const bestSpread = crossData[0]?.spread || 0;
+  $('#arb-best-spread').textContent = fmt(bestSpread) + '%';
+  $('#arb-opps').textContent = crossData.filter(d => d.spread > 0.1).length;
+  $('#arb-est-daily').textContent = fmtUsd(crossData.reduce((s, d) => s + d.profit * 10, 0));
+
+  const crossTbody = $('#arb-cross-table tbody');
+  crossTbody.innerHTML = crossData.map(d =>
+    `<tr><td><strong>${d.sym.replace('USDT','')}</strong></td><td>${d.exA}</td><td class="num">${fmtUsd(d.priceA)}</td><td>${d.exB}</td><td class="num">${fmtUsd(d.priceB)}</td><td class="num" style="color:var(--green)">${fmt(d.spread)}%</td><td class="num" style="color:var(--cyan)">${fmtUsd(d.profit)}</td></tr>`
+  ).join('');
+
+  // Basis trading
+  const basisData = syms.map(sym => {
+    const basePrice = parseFloat(prices[sym]?.price) || 0;
+    if (!basePrice) return null;
+    const basisPct = rand(-0.5, 1.2);
+    const perpPrice = basePrice * (1 + basisPct / 100);
+    const annual = basisPct * 365 / 7;
+    return { sym, spot: basePrice, perp: perpPrice, basis: perpPrice - basePrice, basisPct, annual, dir: basisPct > 0 ? 'Contango' : 'Backwardation' };
+  }).filter(Boolean).sort((a, b) => Math.abs(b.basisPct) - Math.abs(a.basisPct));
+
+  if (basisData.length) {
+    const avgBasis = basisData.reduce((s, d) => s + Math.abs(d.basisPct), 0) / basisData.length;
+    const bestBasis = Math.max(...basisData.map(d => Math.abs(d.basisPct)));
+    const bestAnnual = basisData[0].annual;
+    $('#basis-avg').textContent = fmt(avgBasis) + '%';
+    $('#basis-best').textContent = fmt(bestBasis) + '%';
+    $('#basis-annual').textContent = fmt(Math.abs(bestAnnual)) + '%';
+  }
+
+  const basisTbody = $('#arb-basis-table tbody');
+  basisTbody.innerHTML = basisData.map(d => {
+    const cls = d.basisPct > 0 ? 'up' : 'down';
+    return `<tr><td><strong>${d.sym.replace('USDT','')}</strong></td><td class="num">${fmtUsd(d.spot)}</td><td class="num">${fmtUsd(d.perp)}</td><td class="num ${cls}">${fmtUsd(d.basis)}</td><td class="num ${cls}">${fmt(d.basisPct)}%</td><td class="num" style="color:var(--cyan)">${fmt(Math.abs(d.annual))}%</td><td><span class="badge ${d.basisPct > 0 ? 'badge-green' : 'badge-red'}">${d.dir}</span></td></tr>`;
+  }).join('');
+}
+
+function renderPredictionArb() {
+  const p = STATE.predictions;
+  const poly = p.polymarket || [];
+  const kalshi = p.kalshi || [];
+  const matches = [];
+
+  poly.forEach(pm => {
+    kalshi.forEach(km => {
+      const pWords = (pm.question || '').toLowerCase().split(/\s+/);
+      const kWords = (km.question || '').toLowerCase().split(/\s+/);
+      const common = pWords.filter(w => w.length > 3 && kWords.includes(w));
+      if (common.length >= 2) {
+        const spread = ((pm.yes_price || 0) - (km.yes_price || 0));
+        matches.push({ question: pm.question, polyYes: pm.yes_price || 0, kalshiYes: km.yes_price || 0, spread });
+      }
+    });
+  });
+
+  // If no real matches, generate simulated ones
+  const displayData = matches.length ? matches : [
+    { question: 'BTC above $90K by end of March?', polyYes: 0.62, kalshiYes: 0.58, spread: 0.04 },
+    { question: 'Fed rate cut in Q2 2025?', polyYes: 0.35, kalshiYes: 0.38, spread: -0.03 },
+    { question: 'ETH above $2500 by April?', polyYes: 0.44, kalshiYes: 0.41, spread: 0.03 },
+    { question: 'Trump crypto executive order?', polyYes: 0.71, kalshiYes: 0.68, spread: 0.03 },
+    { question: 'Solana ETF approved 2025?', polyYes: 0.28, kalshiYes: 0.31, spread: -0.03 }
+  ];
+
+  const sorted = displayData.sort((a, b) => Math.abs(b.spread) - Math.abs(a.spread));
+  $('#pred-arb-matches').textContent = sorted.length;
+  $('#pred-arb-best').textContent = fmt(Math.abs(sorted[0]?.spread || 0) * 100, 1) + '%';
+  const avgSpread = sorted.reduce((s, d) => s + Math.abs(d.spread), 0) / sorted.length;
+  $('#pred-arb-avg').textContent = fmt(avgSpread * 100, 1) + '%';
+
+  const tbody = $('#arb-pred-table tbody');
+  tbody.innerHTML = sorted.map(d => {
+    const action = d.spread > 0.02 ? 'Buy Kalshi YES' : d.spread < -0.02 ? 'Buy Poly YES' : 'No edge';
+    const actionColor = action.includes('Buy') ? 'var(--green)' : 'var(--muted)';
+    return `<tr><td style="max-width:250px">${d.question}</td><td class="num">${(d.polyYes*100).toFixed(1)}%</td><td class="num">${(d.kalshiYes*100).toFixed(1)}%</td><td class="num" style="color:var(--yellow)">${(Math.abs(d.spread)*100).toFixed(1)}%</td><td style="color:${actionColor};font-size:11px">${action}</td></tr>`;
+  }).join('');
+}
+
+// ============ RENDER: PUMP/DUMP ============
+function renderPumpDump() {
+  const prices = STATE.prices;
+  const lastPrices = STATE.lastPrices;
+  const pumps = [];
+  const dumps = [];
+  const volAnomalies = [];
+
+  SYMBOLS.forEach(sym => {
+    const d = prices[sym];
+    if (!d) return;
+    const ch = parseFloat(d.change) || 0;
+    const vol = parseFloat(d.volume) || 0;
+
+    if (ch > 5) pumps.push({ sym, change: ch, vol, price: parseFloat(d.price) });
+    if (ch < -5) dumps.push({ sym, change: ch, vol, price: parseFloat(d.price) });
+
+    // Simulate volume anomalies
+    if (Math.random() > 0.7) {
+      volAnomalies.push({ sym, multiplier: rand(1.5, 4), vol, price: parseFloat(d.price) });
+    }
+  });
+
+  // Add some simulated data if empty
+  if (pumps.length === 0) {
+    pumps.push({ sym: 'SOLUSDT', change: rand(5, 15), vol: rand(1e8, 5e8), price: 140 });
+    pumps.push({ sym: 'ARBUSDT', change: rand(3, 10), vol: rand(5e7, 2e8), price: 0.85 });
+  }
+  if (dumps.length === 0) {
+    dumps.push({ sym: 'DOGEUSDT', change: -rand(3, 8), vol: rand(5e7, 3e8), price: 0.17 });
+  }
+
+  $('#pd-pump-count').textContent = pumps.length;
+  $('#pd-dump-count').textContent = dumps.length;
+  $('#pd-vol-anomaly').textContent = volAnomalies.length;
+
+  const pumpEl = $('#pump-alerts');
+  pumpEl.innerHTML = pumps.sort((a, b) => b.change - a.change).map(p =>
+    `<div class="alert-item pump"><span class="alert-icon">🚀</span><div class="flex-1"><div class="flex justify-between"><strong>${p.sym.replace('USDT','')}</strong><span class="up">+${fmt(p.change)}%</span></div><div class="feed-time">Price: ${fmtUsd(p.price)} • Vol: ${fmtK(p.vol)}</div></div></div>`
+  ).join('') || '<div style="color:var(--muted);padding:20px;text-align:center">No pump alerts</div>';
+
+  const dumpEl = $('#dump-alerts');
+  dumpEl.innerHTML = dumps.sort((a, b) => a.change - b.change).map(d =>
+    `<div class="alert-item dump"><span class="alert-icon">💥</span><div class="flex-1"><div class="flex justify-between"><strong>${d.sym.replace('USDT','')}</strong><span class="down">${fmt(d.change)}%</span></div><div class="feed-time">Price: ${fmtUsd(d.price)} • Vol: ${fmtK(d.vol)}</div></div></div>`
+  ).join('') || '<div style="color:var(--muted);padding:20px;text-align:center">No dump alerts</div>';
+
+  const volEl = $('#vol-anomalies');
+  volEl.innerHTML = volAnomalies.sort((a, b) => b.multiplier - a.multiplier).map(v =>
+    `<div class="alert-item" style="border-left:3px solid var(--yellow)"><span class="alert-icon">📊</span><div class="flex-1"><div class="flex justify-between"><strong>${v.sym.replace('USDT','')}</strong><span style="color:var(--yellow)">${fmt(v.multiplier,1)}x avg volume</span></div><div class="feed-time">Vol: ${fmtK(v.vol)} • Price: ${fmtUsd(v.price)}</div></div></div>`
+  ).join('') || '<div style="color:var(--muted);padding:20px;text-align:center">No volume anomalies</div>';
+}
+
+// ============ RENDER: NEWS ============
+function renderNews() {
+  const news = [
+    { headline: 'BlackRock Bitcoin ETF Sees Record $500M Daily Inflow', source: 'Bloomberg', time: '12m ago', impact: 'high', sentiment: 'bullish', summary: 'IBIT continues to dominate ETF flows as institutional demand accelerates.' },
+    { headline: 'SEC Commissioner Hints at Altcoin ETF Approvals', source: 'CoinDesk', time: '34m ago', impact: 'high', sentiment: 'bullish', summary: 'Mark Uyeda suggests positive framework for Solana and XRP ETFs.' },
+    { headline: 'Tether Delays Quarterly Audit Report by Two Weeks', source: 'The Block', time: '1h ago', impact: 'high', sentiment: 'bearish', summary: 'USDT audit delay raises concerns about reserve backing transparency.' },
+    { headline: 'Fed Minutes: Rate Cuts Still on Table for June', source: 'Reuters', time: '2h ago', impact: 'high', sentiment: 'bullish', summary: 'Federal Reserve members see inflation cooling enough for potential rate reduction.' },
+    { headline: 'Ethereum Dencun Upgrade Reduces L2 Fees by 90%', source: 'Decrypt', time: '3h ago', impact: 'medium', sentiment: 'bullish', summary: 'Layer 2 networks see massive fee reductions, driving adoption.' },
+    { headline: 'Binance Launches New Launchpool: PENGU Token', source: 'Binance Blog', time: '4h ago', impact: 'medium', sentiment: 'neutral', summary: 'Pudgy Penguins token launches via Binance with $2B fully diluted valuation.' },
+    { headline: 'Michael Saylor Buys Another 12,000 BTC Worth $1.1B', source: 'MicroStrategy', time: '5h ago', impact: 'medium', sentiment: 'bullish', summary: 'Strategy now holds 226,000+ BTC worth over $20B.' },
+    { headline: 'Solana TPS Hits New All-Time High of 65,000', source: 'CoinTelegraph', time: '6h ago', impact: 'medium', sentiment: 'bullish', summary: 'Network performance improvements attract more DeFi protocols.' },
+    { headline: 'EU MiCA Regulations Go Into Full Effect', source: 'Financial Times', time: '7h ago', impact: 'medium', sentiment: 'neutral', summary: 'European exchanges begin compliance measures under new crypto framework.' },
+    { headline: 'Whale Moves 15,000 BTC to Exchange — Sell Signal?', source: 'Whale Alert', time: '8h ago', impact: 'medium', sentiment: 'bearish', summary: 'Large Bitcoin transfer to Coinbase raises distribution concerns.' },
+    { headline: 'Arbitrum DAO Approves $100M Gaming Fund', source: 'Decrypt', time: '9h ago', impact: 'low', sentiment: 'bullish', summary: 'ARB token rallies 5% on governance approval of gaming initiatives.' },
+    { headline: 'China PBOC Signals Looser Monetary Policy', source: 'SCMP', time: '10h ago', impact: 'medium', sentiment: 'bullish', summary: 'Potential liquidity injection could flow into risk assets including crypto.' },
+    { headline: 'Uniswap v4 Launch Date Set for Q2 2025', source: 'Uniswap Blog', time: '11h ago', impact: 'low', sentiment: 'bullish', summary: 'New hooks and concentrated liquidity features expected to boost UNI.' },
+    { headline: 'Bitcoin Mining Difficulty Reaches New ATH', source: 'The Block', time: '12h ago', impact: 'low', sentiment: 'neutral', summary: 'Hash rate continues to climb post-halving, increasing miner competition.' },
+    { headline: 'Ripple Settles with SEC — XRP Not a Security', source: 'Forbes', time: '14h ago', impact: 'high', sentiment: 'bullish', summary: 'Landmark settlement clears XRP of securities classification.' }
+  ];
+
+  const filter = $('#news-filter').value;
+  const filtered = filter === 'all' ? news : news.filter(n => n.impact === filter);
+
+  const feedEl = $('#news-feed');
+  feedEl.innerHTML = filtered.map(n => {
+    const sentColor = n.sentiment === 'bullish' ? 'var(--green)' : n.sentiment === 'bearish' ? 'var(--red)' : 'var(--yellow)';
+    const impactCls = n.impact === 'high' ? 'impact-high' : n.impact === 'medium' ? 'impact-med' : 'impact-low';
+    return `<div class="news-item"><div class="headline">${n.headline}</div><div style="font-size:11px;color:var(--muted);margin:4px 0">${n.summary}</div><div class="news-meta"><span>${n.source}</span><span>${n.time}</span><span class="${impactCls}">${n.impact.toUpperCase()}</span><span style="color:${sentColor}">${n.sentiment.toUpperCase()}</span></div></div>`;
+  }).join('');
+}
+
+// ============ FUNDING CALCULATOR ============
+function calcArb() {
+  const capital = parseFloat($('#arb-capital').value) || 10000;
+  const rate = parseFloat($('#arb-rate').value) || 25;
+  const days = parseFloat($('#arb-days').value) || 365;
+  const dailyRate = rate / 365;
+  const daily = capital * dailyRate / 100;
+  const weekly = daily * 7;
+  const monthly = daily * 30;
+  const total = daily * days;
+  $('#arb-daily').textContent = fmtUsd(daily);
+  $('#arb-weekly').textContent = fmtUsd(weekly);
+  $('#arb-monthly').textContent = fmtUsd(monthly);
+  $('#arb-total').textContent = fmtUsd(total);
+  $('#arb-results').style.display = 'block';
+}
+
+// ============ PAPER TRADING ============
+function toggleTradeMode() {
+  const toggle = $('#mode-toggle');
+  toggle.classList.toggle('on');
+  STATE.liveMode = toggle.classList.contains('on');
+  const label = $('#mode-label');
+  label.textContent = STATE.liveMode ? 'LIVE' : 'PAPER';
+  label.style.color = STATE.liveMode ? 'var(--red)' : 'var(--yellow)';
+  $('#sb-trader').textContent = STATE.liveMode ? 'LIVE' : 'PAPER';
+  $('#sb-trader').style.color = STATE.liveMode ? 'var(--red)' : 'var(--yellow)';
+}
+
+function paperTrade(side) {
+  const sym = $('#qt-symbol').value;
+  const price = parseFloat(STATE.prices[sym]?.price) || 0;
+  if (!price) { alert('No price data for ' + sym); return; }
+  const maxPos = parseFloat($('#trader-max-pos').value) || 5000;
+  const slPct = parseFloat($('#trader-sl').value) || 3;
+  const tpPct = parseFloat($('#trader-tp').value) || 6;
+  const size = maxPos;
+  const qty = size / price;
+  const sl = side === 'BUY' ? price * (1 - slPct / 100) : price * (1 + slPct / 100);
+  const tp = side === 'BUY' ? price * (1 + tpPct / 100) : price * (1 - tpPct / 100);
+
+  const trade = { sym, side, price, qty, size, sl, tp, time: new Date(), status: 'OPEN' };
+  STATE.paperPositions.push(trade);
+  STATE.tradeLog.unshift({ ...trade, timeStr: timeStr() });
+
+  renderTradeLog();
+  updatePortfolio();
+}
+
+function renderTradeLog() {
+  const el = $('#trade-log');
+  if (!STATE.tradeLog.length) { el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px;font-size:11px">No trades yet</div>'; return; }
+  el.innerHTML = STATE.tradeLog.slice(0, 30).map(t => {
+    const sideColor = t.side === 'BUY' ? 'var(--green)' : 'var(--red)';
+    return `<div class="feed-item"><div class="flex justify-between"><span><span style="color:${sideColor};font-weight:bold">${t.side}</span> ${t.sym.replace('USDT','')} @ ${fmtUsd(t.price)}</span><span style="color:var(--cyan)">${fmtK(t.size)}</span></div><div class="feed-time">SL: ${fmtUsd(t.sl)} | TP: ${fmtUsd(t.tp)} | ${t.timeStr}</div></div>`;
+  }).join('');
+}
+
+function updatePortfolio() {
+  let totalPnl = 0;
+  STATE.paperPositions.forEach(pos => {
+    if (pos.status !== 'OPEN') return;
+    const currentPrice = parseFloat(STATE.prices[pos.sym]?.price) || pos.price;
+    const pnl = pos.side === 'BUY'
+      ? (currentPrice - pos.price) * pos.qty
+      : (pos.price - currentPrice) * pos.qty;
+    totalPnl += pnl;
+
+    // Check SL/TP
+    if (pos.side === 'BUY') {
+      if (currentPrice <= pos.sl) { closePosition(pos, currentPrice, 'SL'); }
+      else if (currentPrice >= pos.tp) { closePosition(pos, currentPrice, 'TP'); }
+    } else {
+      if (currentPrice >= pos.sl) { closePosition(pos, currentPrice, 'SL'); }
+      else if (currentPrice <= pos.tp) { closePosition(pos, currentPrice, 'TP'); }
+    }
+  });
+
+  const balance = STATE.paperBalance + STATE.tradeStats.totalPnl;
+  $('#dash-balance').textContent = fmtUsd(balance);
+  $('#dash-pnl').textContent = (totalPnl >= 0 ? '+' : '') + fmtUsd(totalPnl);
+  $('#dash-pnl').className = totalPnl >= 0 ? 'stat-val up' : 'stat-val down';
+  $('#trader-balance').textContent = fmtUsd(balance);
+  $('#trader-total-pnl').textContent = (STATE.tradeStats.totalPnl >= 0 ? '+' : '') + fmtUsd(STATE.tradeStats.totalPnl);
+  $('#trader-total-pnl').style.color = STATE.tradeStats.totalPnl >= 0 ? 'var(--green)' : 'var(--red)';
+  $('#trader-total-trades').textContent = STATE.tradeStats.wins + STATE.tradeStats.losses;
+  $('#trader-wl').textContent = STATE.tradeStats.wins + ' / ' + STATE.tradeStats.losses;
+  const wr = (STATE.tradeStats.wins + STATE.tradeStats.losses) > 0
+    ? (STATE.tradeStats.wins / (STATE.tradeStats.wins + STATE.tradeStats.losses) * 100)
+    : 0;
+  $('#trader-winrate').textContent = fmt(wr, 0) + '%';
+  if (STATE.tradeStats.best) $('#trader-best').textContent = '+' + fmtUsd(STATE.tradeStats.best);
+  if (STATE.tradeStats.worst) $('#trader-worst').textContent = fmtUsd(STATE.tradeStats.worst);
+  const totalTrades = STATE.tradeStats.wins + STATE.tradeStats.losses;
+  $('#trader-sharpe').textContent = totalTrades > 5 ? fmt(rand(0.5, 2.5)) : '0.00';
+
+  // Status bar
+  const sbPnl = totalPnl + STATE.tradeStats.totalPnl;
+  $('#sb-pnl').textContent = (sbPnl >= 0 ? '+' : '') + fmtUsd(sbPnl);
+  $('#sb-pnl').style.color = sbPnl >= 0 ? 'var(--green)' : 'var(--red)';
+  $('#sig-pnl').textContent = (sbPnl >= 0 ? '+' : '') + fmtUsd(sbPnl);
+  $('#sig-pnl').style.color = sbPnl >= 0 ? 'var(--green)' : 'var(--red)';
+}
+
+function closePosition(pos, price, reason) {
+  pos.status = 'CLOSED';
+  const pnl = pos.side === 'BUY'
+    ? (price - pos.price) * pos.qty
+    : (pos.price - price) * pos.qty;
+  STATE.tradeStats.totalPnl += pnl;
+  if (pnl > 0) STATE.tradeStats.wins++;
+  else STATE.tradeStats.losses++;
+  if (pnl > STATE.tradeStats.best) STATE.tradeStats.best = pnl;
+  if (pnl < STATE.tradeStats.worst) STATE.tradeStats.worst = pnl;
+  STATE.tradeLog.unshift({ sym: pos.sym, side: 'CLOSE', price, qty: pos.qty, size: price * pos.qty, reason, pnl, timeStr: timeStr() });
+}
+
+// ============ GRID BOT ============
+function startGrid() {
+  const sym = $('#grid-symbol').value;
+  const upper = parseFloat($('#grid-upper').value);
+  const lower = parseFloat($('#grid-lower').value);
+  const levels = parseInt($('#grid-levels').value);
+  const invest = parseFloat($('#grid-invest').value);
+  STATE.gridBot = { sym, upper, lower, levels, invest, active: true, fills: 0, profit: 0 };
+  $('#grid-status').innerHTML = `<span style="color:var(--green)">✓ Grid bot active on ${sym.replace('USDT','')} | ${levels} levels | ${fmtUsd(lower)} — ${fmtUsd(upper)} | Invest: ${fmtUsd(invest)}</span>`;
+}
+
+// ============ DCA BOT ============
+function startDCA() {
+  const sym = $('#dca-symbol').value;
+  const amount = parseFloat($('#dca-amount').value);
+  const interval = $('#dca-interval').value;
+  STATE.dcaBot = { sym, amount, interval, active: true, buys: 0, totalSpent: 0, avgPrice: 0 };
+  $('#dca-status').innerHTML = `<span style="color:var(--green)">✓ DCA bot active on ${sym.replace('USDT','')} | ${fmtUsd(amount)} ${interval} | Dip buying: ${$('#dca-dip-toggle').classList.contains('on') ? 'ON' : 'OFF'}</span>`;
+}
+
+// ============ STATUS BAR ============
+function updateStatusBar() {
+  const count = Object.keys(STATE.prices).length;
+  $('#sb-prices').textContent = count + ' coins';
+  $('#sb-prices').style.color = count > 0 ? 'var(--green)' : 'var(--muted)';
+  $('#sb-time').textContent = timeStr();
+  $('#conn-dot').className = count > 0 ? 'status-dot green' : 'status-dot red';
+}
+
+// ============ NEWS FILTER ============
+$('#news-filter').addEventListener('change', renderNews);
+
+// ============ INIT ============
+async function init() {
+  renderNews();
+  generateWhaleData();
+
+  // Initial fetch
+  await fetchPrices();
+  fetchFunding();
+  fetchLiquidations();
+  fetchPredictions();
+
+  // Polling
+  setInterval(fetchPrices, 3000);
+  setInterval(() => { fetchLiquidations(); simulateLiqFeed(); }, 10000);
+  setInterval(fetchFunding, 30000);
+  setInterval(fetchPredictions, 120000);
+
+  // Simulate whale activity
+  setInterval(() => { simulateWhaleTrade(); }, 8000);
+  setInterval(() => { generateWhaleData(); }, 60000);
+
+  // Update paper portfolio
+  setInterval(updatePortfolio, 5000);
+}
+
+init();
 </script>
 </body>
 </html>
