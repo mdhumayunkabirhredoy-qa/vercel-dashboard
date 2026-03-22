@@ -948,7 +948,7 @@ setInterval(updateClock, 1000);
 updateClock();
 
 // ============ API FETCHING ============
-async async function fetchJSON(url) {
+async function fetchJSON(url) {
   try {
     const r = await fetch(url);
     if (!r.ok) throw new Error(r.status);
