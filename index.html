@@ -113,7 +113,7 @@ button:hover{border-color:var(--cyan);color:var(--cyan)}
 @media(min-width:769px){.mobile-toggle,.mobile-overlay{display:none!important}}
 
 /* SKELETON LOADING */
-.skeleton{background:linear-gradient(90deg,var(--bg3) 25%,var(--bg4) 50%,var(--bg3) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px;height:16px;margin:4px 0}
+.skeleton{background:linear-gradient(90deg,rgba(20,25,35,.8) 25%,rgba(30,40,55,.6) 50%,rgba(20,25,35,.8) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px;height:16px;margin:4px 0}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
 /* CARD HOVER LIFT */
@@ -991,19 +991,11 @@ async function fetchPrices() {
   const SYMS = ['BTCUSDT','ETHUSDT','SOLUSDT','DOGEUSDT','XRPUSDT','BNBUSDT','ADAUSDT','AVAXUSDT','LINKUSDT','DOTUSDT','NEARUSDT','OPUSDT','ARBUSDT','SUIUSDT','TONUSDT','PEPEUSDT','WIFUSDT','FETUSDT'];
   let data = null;
   
-  // Try server API first
+  // PRIMARY: Binance direct from browser (always works, no CORS issues)
   try {
-    const serverData = await fetchJSON('/api/prices');
-    if (serverData && !serverData._error_cg && Object.keys(serverData).length >= 3) {
-      data = serverData;
-    }
-  } catch(e) {}
-
-  // Client-side Binance fallback (always works, direct from browser)
-  if (!data) {
-    try {
-      const symbols = JSON.stringify(SYMS);
-      const r = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbols=' + encodeURIComponent(symbols));
+    const symbols = JSON.stringify(SYMS);
+    const r = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbols=' + encodeURIComponent(symbols));
+    if (r.ok) {
       const tickers = await r.json();
       data = {};
       for (const t of tickers) {
@@ -1016,7 +1008,17 @@ async function fetchPrices() {
           name: t.symbol.replace('USDT','')
         };
       }
-    } catch(e) { console.warn('Binance fallback failed:', e); }
+    }
+  } catch(e) { console.warn('Binance direct failed:', e); }
+
+  // FALLBACK: Server API (CoinGecko, may rate-limit)
+  if (!data || Object.keys(data).length < 3) {
+    try {
+      const serverData = await fetchJSON('/api/prices');
+      if (serverData && Object.keys(serverData).length >= 3 && !serverData._error_cg) {
+        data = serverData;
+      }
+    } catch(e) {}
   }
 
   if (!data || Object.keys(data).length === 0) return;
