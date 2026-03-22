@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <title>QUANTUM TERMINAL — Crypto Trading Dashboard</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -11,7 +12,8 @@
 --cyan:#00D4FF;--green:#00FF88;--magenta:#FF00FF;--red:#FF4444;--yellow:#FFD700;
 --white:#e0e0e0;--muted:#6a6a8a;--text:#c8c8e0;
 }
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Courier New',monospace;font-size:13px;overflow:hidden}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:13px;overflow:hidden}
+.mono,.data-table td.num,.price-card .price,.stat-box .stat-val,.ticker-price{font-family:'JetBrains Mono','Courier New',monospace}
 a{color:var(--cyan);text-decoration:none}
 a:hover{text-decoration:underline}
 input,select,button,textarea{font-family:inherit;font-size:inherit;background:var(--bg2);color:var(--text);border:1px solid var(--border);padding:6px 10px;border-radius:4px;outline:none}
@@ -98,7 +100,26 @@ button:hover{border-color:var(--cyan);color:var(--cyan)}
 
 /* CARD HOVER LIFT */
 .price-card,.panel{transition:all .3s ease}
-.price-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,212,255,.1)}
+.price-card:hover{transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,212,255,.12);border-color:rgba(0,212,255,.3)}
+.panel:hover{border-color:rgba(0,212,255,.15)}
+
+/* GLOW TEXT */
+.glow-cyan{text-shadow:0 0 10px rgba(0,212,255,.5),0 0 20px rgba(0,212,255,.2)}
+.glow-green{text-shadow:0 0 10px rgba(0,255,136,.5),0 0 20px rgba(0,255,136,.2)}
+.glow-magenta{text-shadow:0 0 10px rgba(255,0,255,.5),0 0 20px rgba(255,0,255,.2)}
+
+/* GRADIENT BORDER CARDS */
+.gradient-border{position:relative;border:none!important;background:var(--bg2)}
+.gradient-border::before{content:'';position:absolute;inset:-1px;border-radius:7px;padding:1px;background:linear-gradient(135deg,var(--cyan),var(--magenta));-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;opacity:.3;transition:opacity .3s}
+.gradient-border:hover::before{opacity:.7}
+
+/* BETTER BADGES */
+.badge{backdrop-filter:blur(4px)}
+
+/* PULSE DOT */
+.pulse-dot{width:8px;height:8px;border-radius:50%;display:inline-block;animation:pulseDot 2s ease infinite}
+@keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(0,255,136,.4)}50%{box-shadow:0 0 0 6px rgba(0,255,136,0)}}
+.pulse-dot.green{background:var(--green)}.pulse-dot.red{background:var(--red)}.pulse-dot.yellow{background:var(--yellow)}
 
 /* PANELS */
 .panel{background:var(--bg2);border:1px solid var(--border);border-radius:6px;margin-bottom:12px;overflow:hidden}
@@ -1653,11 +1674,11 @@ async function init() {
 
 // TICKER BAR
 function updateTickerBar() {
-  const p = window._prices || {};
+  const p = STATE.prices || {};
   const fmt = (v) => v >= 1000 ? '$'+v.toLocaleString('en',{maximumFractionDigits:0}) : '$'+v.toFixed(2);
-  if(p.BTCUSDT) { const d=p.BTCUSDT; document.getElementById('tickBTC').textContent=fmt(d.price||d); document.getElementById('tickBTC').className='ticker-price '+((d.change||0)>=0?'up':'down'); }
-  if(p.ETHUSDT) { const d=p.ETHUSDT; document.getElementById('tickETH').textContent=fmt(d.price||d); }
-  if(p.SOLUSDT) { const d=p.SOLUSDT; document.getElementById('tickSOL').textContent=fmt(d.price||d); }
+  if(p.BTCUSDT) { const d=p.BTCUSDT; const pr=typeof d==='object'?d.price:d; document.getElementById('tickBTC').textContent=fmt(pr); document.getElementById('tickBTC').className='ticker-price '+((d.change||0)>=0?'up':'down'); }
+  if(p.ETHUSDT) { const d=p.ETHUSDT; const pr=typeof d==='object'?d.price:d; document.getElementById('tickETH').textContent=fmt(pr); document.getElementById('tickETH').className='ticker-price '+((d.change||0)>=0?'up':'down'); }
+  if(p.SOLUSDT) { const d=p.SOLUSDT; const pr=typeof d==='object'?d.price:d; document.getElementById('tickSOL').textContent=fmt(pr); document.getElementById('tickSOL').className='ticker-price '+((d.change||0)>=0?'up':'down'); }
   document.getElementById('clockDisplay').textContent = new Date().toLocaleTimeString();
 }
 
