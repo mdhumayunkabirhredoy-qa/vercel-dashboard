@@ -1,1 +1,1 @@
-# No external dependencies needed - using stdlib urllib only
+# empty - using only stdlib
