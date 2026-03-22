@@ -127,7 +127,7 @@ tr:hover{background:rgba(0,212,255,.03)}
       <div class="card">
         <div class="card-title">📊 Market Overview</div>
         <table>
-          <thead><tr><th>SYM</th><th>PRICE</th><th>OI</th><th>L/S RATIO</th></tr></thead>
+          <thead><tr><th>SYM</th><th>PRICE</th><th>24H</th><th>OI</th><th>L/S RATIO</th></tr></thead>
           <tbody id="marketTable"><tr><td colspan="4" class="loading"><span class="spin"></span>Loading market data...</td></tr></tbody>
         </table>
       </div>
@@ -305,32 +305,47 @@ async function fetchPrices(){
   }
 }
 
+function getPrice(s){
+  const d=prices[s];
+  if(!d)return null;
+  if(typeof d==='number')return{price:d,change:0,volume:0};
+  return d;
+}
+
 function updatePrices(){
-  const syms=['BTCUSDT','ETHUSDT','SOLUSDT','DOGEUSDT','XRPUSDT','BNBUSDT','WIFUSDT','PEPEUSDT','ARBUSDT','OPUSDT','AVAXUSDT','LINKUSDT'];
-  const names={BTCUSDT:'Bitcoin',ETHUSDT:'Ethereum',SOLUSDT:'Solana',DOGEUSDT:'Dogecoin',XRPUSDT:'XRP',BNBUSDT:'BNB',WIFUSDT:'dogwifhat',PEPEUSDT:'PEPE',ARBUSDT:'Arbitrum',OPUSDT:'Optimism',AVAXUSDT:'Avalanche',LINKUSDT:'Chainlink'};
-  const top=syms.filter(s=>prices[s]).slice(0,4);
+  const syms=['BTCUSDT','ETHUSDT','SOLUSDT','DOGEUSDT','XRPUSDT','BNBUSDT','WIFUSDT','PEPEUSDT','ARBUSDT','OPUSDT','AVAXUSDT','LINKUSDT','ADAUSDT','NEARUSDT','SUIUSDT','TONUSDT'];
+  const names={BTCUSDT:'Bitcoin',ETHUSDT:'Ethereum',SOLUSDT:'Solana',DOGEUSDT:'Dogecoin',XRPUSDT:'XRP',BNBUSDT:'BNB',WIFUSDT:'dogwifhat',PEPEUSDT:'PEPE',ARBUSDT:'Arbitrum',OPUSDT:'Optimism',AVAXUSDT:'Avalanche',LINKUSDT:'Chainlink',ADAUSDT:'Cardano',NEARUSDT:'NEAR',SUIUSDT:'Sui',TONUSDT:'Toncoin'};
+  const top=syms.filter(s=>getPrice(s)).slice(0,4);
   
   // Price cards
-  const cards=top.map(s=>`
-    <div class="card price-card">
+  const cards=top.map(s=>{
+    const d=getPrice(s);
+    const chg=d.change||0;
+    const chgClass=chg>=0?'pos':'neg';
+    return`<div class="card price-card">
       <div class="card-title"><span class="sym">${s.replace('USDT','')}</span> · ${names[s]||''}</div>
-      <div class="card-value">${fmtPrice(prices[s])}</div>
-    </div>`).join('');
-  document.getElementById('priceCards').innerHTML=cards||'<div class="card"><div class="loading">No price data</div></div>';
+      <div class="card-value">${fmtPrice(d.price)}</div>
+      <div class="card-sub"><span class="${chgClass}">${chg>=0?'+':''}${fmt(chg,2)}%</span>${d.volume?' · Vol: $'+fmt(d.volume,0):''}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('priceCards').innerHTML=cards||'<div class="card"><div class="loading"><span class="spin"></span>Connecting to Binance...</div></div>';
 
   // Market table
-  const rows=syms.filter(s=>prices[s]).map(s=>{
+  const rows=syms.filter(s=>getPrice(s)).map(s=>{
+    const d=getPrice(s);
     const oi=liqData.open_interest?.[s];
     const ls=liqData.long_short_ratio?.[s];
     const lsClass=ls?(ls.ratio>1?'pos':'neg'):'';
+    const chgClass=(d.change||0)>=0?'pos':'neg';
     return`<tr>
       <td><strong>${s.replace('USDT','')}</strong></td>
-      <td>${fmtPrice(prices[s])}</td>
+      <td>${fmtPrice(d.price)}</td>
+      <td class="${chgClass}">${d.change?(d.change>=0?'+':'')+fmt(d.change,2)+'%':'--'}</td>
       <td>${oi?fmt(oi,0):'--'}</td>
       <td class="${lsClass}">${ls?fmt(ls.ratio,2)+'x':'--'}</td>
     </tr>`;
   }).join('');
-  document.getElementById('marketTable').innerHTML=rows||'<tr><td colspan="4" class="loading">No data</td></tr>';
+  document.getElementById('marketTable').innerHTML=rows||'<tr><td colspan="5" class="loading"><span class="spin"></span>Loading...</td></tr>';
 }
 
 // ═══ FETCH FUNDING ═══
