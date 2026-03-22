@@ -1646,8 +1646,13 @@ async function init() {
   renderNews();
   generateWhaleData();
 
-  // Initial fetch
+  // Initial fetch with retry
   await fetchPrices();
+  if(Object.keys(STATE.prices).length === 0) {
+    setTimeout(async () => { await fetchPrices(); updateTickerBar(); }, 3000);
+    setTimeout(async () => { await fetchPrices(); updateTickerBar(); }, 8000);
+  }
+  updateTickerBar();
   fetchFunding();
   fetchLiquidations();
   fetchPredictions();
