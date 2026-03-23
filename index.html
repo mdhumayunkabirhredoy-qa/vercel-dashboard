@@ -177,6 +177,7 @@ th,td{padding:4px 5px}
 <div class="nav-item" data-page="arbitrage"><span class="nav-icon">⚡</span>Arbitrage</div>
 <div class="nav-item" data-page="history"><span class="nav-icon">📈</span>History</div>
 <div class="nav-item" data-page="ailab"><span class="nav-icon">🧠</span>AI Lab</div>
+<div class="nav-item" data-page="arena"><span class="nav-icon">🏟️</span>Arena</div>
 <div class="nav-item" data-page="news"><span class="nav-icon">📰</span>News</div>
 <div class="nav-item" data-page="brain"><span class="nav-icon">🧪</span>Brain</div>
 </nav>
@@ -193,6 +194,7 @@ th,td{padding:4px 5px}
 <div class="bottom-nav-item" data-page="arbitrage"><span class="bnav-icon">⚡</span>Arb</div>
 <div class="bottom-nav-item" data-page="history"><span class="bnav-icon">📈</span>Hist</div>
 <div class="bottom-nav-item" data-page="ailab"><span class="bnav-icon">🧠</span>Lab</div>
+<div class="bottom-nav-item" data-page="arena"><span class="bnav-icon">🏟️</span>Arena</div>
 <div class="bottom-nav-item" data-page="news"><span class="bnav-icon">📰</span>News</div>
 <div class="bottom-nav-item" data-page="brain"><span class="bnav-icon">🧪</span>Brain</div>
 </div>
@@ -485,6 +487,83 @@ th,td{padding:4px 5px}
 
 <!-- ====== PAGE 11: NEWS ====== -->
 <div class="page" id="page-news">
+
+<!-- MULTI-AGENT ARENA (before News) -->
+</div>
+<div class="page" id="page-arena">
+<div class="auto-toggle">
+<span class="toggle-label">🤖 Multi-Agent Arena</span>
+<label class="switch"><input type="checkbox" id="auto-arena"><span class="slider"></span></label>
+<span class="toggle-status off" id="auto-arena-status">OFF</span>
+</div>
+<div class="panel" style="margin-bottom:8px">
+<div class="panel-header"><span class="panel-title">🏟️ Agent Arena — Live Competition</span>
+<button class="btn btn-green" onclick="startArena()" style="font-size:10px">▶ START ALL</button>
+<button class="btn btn-red" onclick="stopArena()" style="font-size:10px">⏹ STOP</button>
+</div>
+<div class="grid grid-2" style="gap:6px" id="arena-agents">
+<div class="panel" style="border-color:var(--cyan);margin:0">
+<div class="panel-header"><span style="color:var(--cyan)">🤖 Agent Alpha</span><span class="panel-badge" id="arena-a1-status" style="background:var(--green)">READY</span></div>
+<div style="font-size:10px;padding:4px">
+<div>Model: <b style="color:var(--cyan)" id="arena-a1-model">claude-opus-4-6</b></div>
+<div>Strategy: <b style="color:var(--yellow)">Aggressive Momentum</b></div>
+<div>Trades: <span id="arena-a1-trades">0</span> | Win: <span id="arena-a1-win" style="color:var(--green)">0%</span></div>
+<div>PnL: <span id="arena-a1-pnl" style="color:var(--green)">$0.00</span></div>
+<div style="margin-top:4px;font-size:9px;color:var(--text2)" id="arena-a1-task">Idle — waiting to start</div>
+</div>
+</div>
+<div class="panel" style="border-color:var(--magenta);margin:0">
+<div class="panel-header"><span style="color:var(--magenta)">🧠 Agent Beta</span><span class="panel-badge" id="arena-a2-status" style="background:var(--green)">READY</span></div>
+<div style="font-size:10px;padding:4px">
+<div>Model: <b style="color:var(--magenta)" id="arena-a2-model">gemini-2.5-pro</b></div>
+<div>Strategy: <b style="color:var(--yellow)">Conservative Mean-Revert</b></div>
+<div>Trades: <span id="arena-a2-trades">0</span> | Win: <span id="arena-a2-win" style="color:var(--green)">0%</span></div>
+<div>PnL: <span id="arena-a2-pnl" style="color:var(--green)">$0.00</span></div>
+<div style="margin-top:4px;font-size:9px;color:var(--text2)" id="arena-a2-task">Idle — waiting to start</div>
+</div>
+</div>
+<div class="panel" style="border-color:var(--green);margin:0">
+<div class="panel-header"><span style="color:var(--green)">⚡ Agent Gamma</span><span class="panel-badge" id="arena-a3-status" style="background:var(--green)">READY</span></div>
+<div style="font-size:10px;padding:4px">
+<div>Model: <b style="color:var(--green)" id="arena-a3-model">gpt-5.4</b></div>
+<div>Strategy: <b style="color:var(--yellow)">Scalp + Funding Arb</b></div>
+<div>Trades: <span id="arena-a3-trades">0</span> | Win: <span id="arena-a3-win" style="color:var(--green)">0%</span></div>
+<div>PnL: <span id="arena-a3-pnl" style="color:var(--green)">$0.00</span></div>
+<div style="margin-top:4px;font-size:9px;color:var(--text2)" id="arena-a3-task">Idle — waiting to start</div>
+</div>
+</div>
+<div class="panel" style="border-color:var(--yellow);margin:0">
+<div class="panel-header"><span style="color:var(--yellow)">🔮 Agent Delta</span><span class="panel-badge" id="arena-a4-status" style="background:var(--green)">READY</span></div>
+<div style="font-size:10px;padding:4px">
+<div>Model: <b style="color:var(--yellow)" id="arena-a4-model">claude-haiku-4-5</b></div>
+<div>Strategy: <b style="color:var(--yellow)">Polymarket Predict</b></div>
+<div>Trades: <span id="arena-a4-trades">0</span> | Win: <span id="arena-a4-win" style="color:var(--green)">0%</span></div>
+<div>PnL: <span id="arena-a4-pnl" style="color:var(--green)">$0.00</span></div>
+<div style="margin-top:4px;font-size:9px;color:var(--text2)" id="arena-a4-task">Idle — waiting to start</div>
+</div>
+</div>
+</div>
+</div>
+<div class="panel" style="margin-bottom:8px">
+<div class="panel-header"><span class="panel-title">📊 Leaderboard</span></div>
+<div class="table-wrap"><table><thead><tr><th>Rank</th><th>Agent</th><th>Model</th><th>Strategy</th><th>Trades</th><th>Win%</th><th>PnL</th><th>Sharpe</th><th>Status</th></tr></thead>
+<tbody id="arena-leaderboard">
+<tr><td>1</td><td style="color:var(--cyan)">Alpha</td><td>claude-opus-4-6</td><td>Momentum</td><td>0</td><td>—</td><td>$0</td><td>—</td><td style="color:var(--green)">READY</td></tr>
+<tr><td>2</td><td style="color:var(--magenta)">Beta</td><td>gemini-2.5-pro</td><td>Mean-Revert</td><td>0</td><td>—</td><td>$0</td><td>—</td><td style="color:var(--green)">READY</td></tr>
+<tr><td>3</td><td style="color:var(--green)">Gamma</td><td>gpt-5.4</td><td>Scalp+Arb</td><td>0</td><td>—</td><td>$0</td><td>—</td><td style="color:var(--green)">READY</td></tr>
+<tr><td>4</td><td style="color:var(--yellow)">Delta</td><td>claude-haiku-4-5</td><td>Predict</td><td>0</td><td>—</td><td>$0</td><td>—</td><td style="color:var(--green)">READY</td></tr>
+</tbody></table></div>
+</div>
+<div class="panel">
+<div class="panel-header"><span class="panel-title">📜 Arena Log</span></div>
+<div id="arena-log" style="max-height:200px;overflow-y:auto;font-size:10px;padding:4px">
+<div style="color:var(--text2)">[system] Arena initialized — 4 agents configured. Press START ALL to begin competition.</div>
+</div>
+</div>
+</div>
+
+<!-- ====== PAGE 11 ACTUAL: NEWS ====== -->
+<div class="page" id="page-news-actual">
 <div class="auto-toggle">
 <span class="toggle-label">🤖 AI Auto-News</span>
 <label class="switch"><input type="checkbox" id="auto-news"><span class="slider"></span></label>
@@ -1408,6 +1487,99 @@ document.addEventListener('DOMContentLoaded', () => {
   startAutoRefresh();
   simulateLiveEvents();
 });
+
+// ============ MULTI-AGENT ARENA ============
+let arenaRunning = false;
+let arenaInterval = null;
+const arenaAgents = [
+  {id:'a1',name:'Alpha',color:'var(--cyan)',model:'claude-opus-4-6',strategy:'Aggressive Momentum',trades:0,wins:0,pnl:0,sharpe:0,tasks:['Scanning BTC 15m chart','Checking RSI divergence']},
+  {id:'a2',name:'Beta',color:'var(--magenta)',model:'gemini-2.5-pro',strategy:'Conservative Mean-Revert',trades:0,wins:0,pnl:0,sharpe:0,tasks:['Analyzing ETH mean reversion','Checking Bollinger Bands']},
+  {id:'a3',name:'Gamma',color:'var(--green)',model:'gpt-5.4',strategy:'Scalp + Funding Arb',trades:0,wins:0,pnl:0,sharpe:0,tasks:['Monitoring funding rates','Comparing Binance vs Bybit']},
+  {id:'a4',name:'Delta',color:'var(--yellow)',model:'claude-haiku-4-5',strategy:'Polymarket Predict',trades:0,wins:0,pnl:0,sharpe:0,tasks:['Scanning Polymarket markets','Tracking whale wallets']},
+];
+
+function startArena(){
+  if(arenaRunning) return;
+  arenaRunning=true;
+  addArenaLog('system','🏟️ Arena STARTED — all agents are now competing!');
+  arenaAgents.forEach(a=>{
+    const el=document.getElementById('arena-'+a.id+'-status');
+    if(el){el.textContent='RUNNING';el.style.background='var(--cyan)';}
+  });
+  arenaInterval=setInterval(simulateArenaTick,3000);
+}
+
+function stopArena(){
+  arenaRunning=false;
+  if(arenaInterval){clearInterval(arenaInterval);arenaInterval=null;}
+  addArenaLog('system','⏹ Arena STOPPED');
+  arenaAgents.forEach(a=>{
+    const el=document.getElementById('arena-'+a.id+'-status');
+    if(el){el.textContent='STOPPED';el.style.background='var(--red)';}
+  });
+}
+
+function simulateArenaTick(){
+  const symbols=['BTC','ETH','SOL','DOGE','XRP','ADA','AVAX','DOT'];
+  const actions=['LONG','SHORT'];
+  arenaAgents.forEach(a=>{
+    if(Math.random()<0.4){
+      const sym=symbols[Math.floor(Math.random()*symbols.length)];
+      const side=actions[Math.floor(Math.random()*2)];
+      const win=Math.random()<0.55;
+      const pnlChange=win?(Math.random()*200+50):-(Math.random()*150+30);
+      a.trades++;
+      if(win)a.wins++;
+      a.pnl+=pnlChange;
+      a.sharpe=a.trades>3?((a.pnl/a.trades)/Math.max(Math.abs(pnlChange),1)*Math.sqrt(a.trades)):0;
+      const pnlStr=pnlChange>=0?'+$'+pnlChange.toFixed(0):'-$'+Math.abs(pnlChange).toFixed(0);
+      const color=win?'var(--green)':'var(--red)';
+      addArenaLog(a.name,`${side} ${sym} → ${win?'WIN':'LOSS'} (${pnlStr})`,a.color);
+      // Update agent card
+      const pre='arena-'+a.id+'-';
+      const el=n=>document.getElementById(pre+n);
+      if(el('trades'))el('trades').textContent=a.trades;
+      if(el('win')){el('win').textContent=(a.wins/a.trades*100).toFixed(0)+'%';el('win').style.color=a.wins/a.trades>0.5?'var(--green)':'var(--red)';}
+      if(el('pnl')){el('pnl').textContent=(a.pnl>=0?'+':'')+' $'+a.pnl.toFixed(0);el('pnl').style.color=a.pnl>=0?'var(--green)':'var(--red)';}
+      // Update task
+      const taskIdx=Math.floor(Math.random()*a.tasks.length);
+      if(el('task'))el('task').textContent=a.tasks[taskIdx];
+    }
+  });
+  updateArenaLeaderboard();
+}
+
+function updateArenaLeaderboard(){
+  const sorted=[...arenaAgents].sort((a,b)=>b.pnl-a.pnl);
+  const tbody=document.getElementById('arena-leaderboard');
+  if(!tbody)return;
+  tbody.innerHTML=sorted.map((a,i)=>{
+    const wr=a.trades>0?(a.wins/a.trades*100).toFixed(0)+'%':'—';
+    const pnl=(a.pnl>=0?'+':'')+' $'+a.pnl.toFixed(0);
+    const status=arenaRunning?'RUNNING':'STOPPED';
+    const statusColor=arenaRunning?'var(--green)':'var(--red)';
+    return `<tr>
+      <td style="color:var(--yellow)">#${i+1}</td>
+      <td style="color:${a.color}">${a.name}</td>
+      <td style="font-size:9px">${a.model}</td>
+      <td style="font-size:9px">${a.strategy}</td>
+      <td>${a.trades}</td>
+      <td style="color:${a.wins/Math.max(a.trades,1)>0.5?'var(--green)':'var(--red)'}">${wr}</td>
+      <td style="color:${a.pnl>=0?'var(--green)':'var(--red)'}">${pnl}</td>
+      <td>${a.sharpe.toFixed(2)}</td>
+      <td style="color:${statusColor}">${status}</td>
+    </tr>`;
+  }).join('');
+}
+
+function addArenaLog(agent,msg,color){
+  const log=document.getElementById('arena-log');
+  if(!log)return;
+  const time=new Date().toLocaleTimeString('en-US',{hour12:false});
+  const c=color||'var(--text2)';
+  log.innerHTML=`<div><span style="color:var(--text2)">[${time}]</span> <span style="color:${c}">[${agent}]</span> ${msg}</div>`+log.innerHTML;
+  if(log.children.length>50)log.removeChild(log.lastChild);
+}
 </script>
 </body>
 </html>
